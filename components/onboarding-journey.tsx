@@ -255,12 +255,14 @@ export function OnboardingJourney() {
             total={stages.length}
             agents={activeStageAgents}
             palette={palette}
-            onPrev={() =>
+            onPrev={() => {
+              console.log("[v0] Prev clicked, current idx:", activeStageIdx)
               setActiveStageIdx((i) => Math.max(0, i - 1))
-            }
-            onNext={() =>
+            }}
+            onNext={() => {
+              console.log("[v0] Next clicked, current idx:", activeStageIdx)
               setActiveStageIdx((i) => Math.min(stages.length - 1, i + 1))
-            }
+            }}
             onAddAgent={() =>
               openAdd({ scope: "stage", stageId: activeStage.id })
             }
@@ -387,7 +389,7 @@ function JourneyPath({
           {/* Backbone line */}
           <div
             aria-hidden
-            className="absolute left-[60px] right-[60px] top-[58px] h-[3px] rounded-full"
+            className="pointer-events-none absolute left-[60px] right-[60px] top-[58px] h-[3px] rounded-full"
             style={{
               background: `linear-gradient(90deg, ${hexToRgba(
                 palette.primary,
@@ -401,7 +403,7 @@ function JourneyPath({
           {/* Animated dashed overlay */}
           <div
             aria-hidden
-            className="animate-flow-dash absolute left-[60px] right-[60px] top-[58px] h-[3px] rounded-full"
+            className="animate-flow-dash pointer-events-none absolute left-[60px] right-[60px] top-[58px] h-[3px] rounded-full"
             style={{
               background: `repeating-linear-gradient(90deg, ${hexToRgba(
                 palette.accent,
@@ -413,7 +415,7 @@ function JourneyPath({
           {/* Traveling customer dot */}
           <span
             aria-hidden
-            className="animate-connector-particle absolute left-[60px] top-[58px] -translate-y-1/2"
+            className="animate-connector-particle pointer-events-none absolute left-[60px] top-[58px] -translate-y-1/2"
             style={{
               width: `calc(100% - 120px)`,
               animationDuration: "8s",
@@ -639,8 +641,7 @@ function ActiveStagePanel({
 
   return (
     <section
-      key={stage.id}
-      className="animate-draw-in relative mt-6 overflow-hidden rounded-2xl border-2 bg-card shadow-md"
+      className="relative mt-6 overflow-hidden rounded-2xl border-2 bg-card shadow-md transition-colors"
       style={{ borderColor: hexToRgba(palette.primary, 0.25) }}
     >
       {/* top accent bar */}
@@ -785,8 +786,11 @@ function ActiveStagePanel({
         </div>
       </div>
 
-      {/* Two-column body: Agents + Processes */}
-      <div className="grid gap-0 border-t lg:grid-cols-[1fr_1fr]">
+      {/* Two-column body: Agents + Processes — keyed so content re-animates on stage change */}
+      <div
+        key={stage.id}
+        className="animate-draw-in grid gap-0 border-t lg:grid-cols-[1fr_1fr]"
+      >
         {/* Agents */}
         <div className="space-y-3 border-b p-5 sm:p-6 lg:border-b-0 lg:border-r">
           <div className="flex items-center justify-between">
