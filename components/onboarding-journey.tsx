@@ -255,14 +255,12 @@ export function OnboardingJourney() {
             total={stages.length}
             agents={activeStageAgents}
             palette={palette}
-            onPrev={() => {
-              console.log("[v0] Prev clicked, current idx:", activeStageIdx)
+            onPrev={() =>
               setActiveStageIdx((i) => Math.max(0, i - 1))
-            }}
-            onNext={() => {
-              console.log("[v0] Next clicked, current idx:", activeStageIdx)
+            }
+            onNext={() =>
               setActiveStageIdx((i) => Math.min(stages.length - 1, i + 1))
-            }}
+            }
             onAddAgent={() =>
               openAdd({ scope: "stage", stageId: activeStage.id })
             }
@@ -702,18 +700,20 @@ function ActiveStagePanel({
           </div>
 
           {/* Stage navigation */}
-          <div className="flex shrink-0 flex-wrap items-center gap-2">
+          <div className="relative z-10 flex shrink-0 flex-wrap items-center gap-2">
             <Button
               variant="outline"
               size="sm"
               onClick={onPrev}
               disabled={isFirst}
               className="gap-1.5"
+              type="button"
             >
               <ChevronLeft className="size-4" />
               Prev
             </Button>
             <Button
+              type="button"
               size="sm"
               onClick={onNext}
               disabled={isLast}
