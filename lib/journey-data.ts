@@ -124,6 +124,41 @@ export const initialStages: Stage[] = [
       },
       {
         id: "p-3-3",
+        name: "Sole Trader Business Verification",
+        type: "agentic",
+        description:
+          "Validates sole-trader trading evidence, HMRC artefacts and self-employment status.",
+      },
+      {
+        id: "p-3-4",
+        name: "Web Presence & Search Verification",
+        type: "agentic",
+        description:
+          "Open-web search for business name, website, news and digital footprint cross-checks.",
+      },
+      {
+        id: "p-3-5",
+        name: "Google Maps & Premises Check",
+        type: "agentic",
+        description:
+          "Google Maps / Street View lookup to validate trading premises, signage and location plausibility.",
+      },
+      {
+        id: "p-3-6",
+        name: "Trusted Sites & Registry Cross-Check",
+        type: "agentic",
+        description:
+          "Cross-checks against trusted sources (Companies House, FCA, HMRC, trade bodies, regulator lists).",
+      },
+      {
+        id: "p-3-7",
+        name: "Plausibility Assessment",
+        type: "agentic",
+        description:
+          "Triangulates documents, web, maps and registries to score whether the business plausibly operates as declared.",
+      },
+      {
+        id: "p-3-8",
         name: "Business Plan Review",
         type: "human",
         description:
@@ -520,6 +555,117 @@ export const initialAgents: Agent[] = [
     ],
     inputs: ["Business plan", "Website", "Sector risk taxonomy"],
     outputs: ["Structured analyst brief", "Risk flags"],
+  },
+  {
+    id: "agent-3-3",
+    scope: "stage",
+    stageId: "stage-3",
+    name: "Sole Trader Business Verification Agent",
+    function:
+      "Validates sole-trader trading evidence, self-employment and identity-to-business linkage",
+    maturity: "L3",
+    tasks: [
+      "Confirm self-employment via HMRC UTR / SA302 / tax records",
+      "Match sole trader identity to declared trading name and activity",
+      "Validate trading evidence (invoices, bank statements, contracts)",
+      "Flag inconsistencies between declared and observed activity",
+    ],
+    inputs: [
+      "HMRC artefacts (UTR, SA302)",
+      "Bank statements",
+      "Customer declaration",
+      "Invoices / contracts",
+    ],
+    outputs: ["Sole trader validation result", "Trading evidence pack", "Inconsistency flags"],
+  },
+  {
+    id: "agent-3-4",
+    scope: "stage",
+    stageId: "stage-3",
+    name: "Web Search Agent",
+    function:
+      "Performs open-web search to verify the business exists, is trading and matches declarations",
+    maturity: "L2",
+    tasks: [
+      "Search for company name, brand and trading aliases across the open web",
+      "Crawl official website and validate ownership and activity claims",
+      "Pull recent news, reviews and adverse coverage",
+      "Score digital footprint plausibility vs. declared size and sector",
+    ],
+    inputs: [
+      "Company name / aliases",
+      "Declared website",
+      "News and review sources",
+      "Search APIs",
+    ],
+    outputs: ["Digital footprint dossier", "Adverse media flags", "Plausibility score"],
+  },
+  {
+    id: "agent-3-5",
+    scope: "stage",
+    stageId: "stage-3",
+    name: "Google Maps & Premises Agent",
+    function:
+      "Uses Google Maps and Street View to validate trading premises and physical plausibility",
+    maturity: "L2",
+    tasks: [
+      "Locate registered and trading address on Google Maps",
+      "Inspect Street View for signage, condition and business type",
+      "Detect virtual offices, residential lets and shared mail-drops",
+      "Cross-check opening hours and reviews",
+    ],
+    inputs: ["Registered address", "Trading address", "Google Maps / Street View"],
+    outputs: ["Premises validation", "Address-type classification", "Visual evidence pack"],
+  },
+  {
+    id: "agent-3-6",
+    scope: "stage",
+    stageId: "stage-3",
+    name: "Trusted Sources Agent",
+    function:
+      "Cross-checks the business against trusted registries, regulators and trade bodies",
+    maturity: "L3",
+    tasks: [
+      "Query Companies House, FCA, HMRC and equivalent registries",
+      "Match against trade body memberships and licensing schemes",
+      "Check sanctions, PEP and watchlist databases",
+      "Aggregate trust signals into a unified evidence pack",
+    ],
+    inputs: [
+      "Companies House",
+      "FCA register",
+      "HMRC lists",
+      "Trade bodies",
+      "Sanctions / PEP feeds",
+    ],
+    outputs: ["Trusted-source evidence pack", "Regulatory flags", "Sanctions / PEP hits"],
+  },
+  {
+    id: "agent-3-7",
+    scope: "stage",
+    stageId: "stage-3",
+    name: "Plausibility Agent",
+    function:
+      "Triangulates documents, web, maps and registries to score whether the business plausibly operates as declared",
+    maturity: "L3",
+    tasks: [
+      "Aggregate signals from registry, web, maps and document agents",
+      "Detect contradictions between declared and observed activity",
+      "Score plausibility across identity, premises, activity and scale",
+      "Produce explainable plausibility verdict for analyst",
+    ],
+    inputs: [
+      "Business Verification Agent output",
+      "Web Search Agent output",
+      "Google Maps Agent output",
+      "Trusted Sources Agent output",
+      "Customer declarations",
+    ],
+    outputs: [
+      "Plausibility score (identity / premises / activity / scale)",
+      "Contradiction report",
+      "Explainable verdict",
+    ],
   },
 
   /* ---------- Stage 4: Ownership ---------- */
