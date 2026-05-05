@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import {
   ArrowRight,
   Bot,
@@ -115,6 +115,18 @@ export function OnboardingJourney() {
 
   const activeStage = stages[activeStageIdx]
   const activeStageAgents = stageAgents.get(activeStage.id) ?? []
+  const panelRef = useRef<HTMLDivElement>(null)
+  const isInitialMount = useRef(true)
+
+  // When the active stage changes, scroll the focused panel into view so the
+  // user gets a clear visual confirmation the click took effect.
+  useEffect(() => {
+    if (isInitialMount.current) {
+      isInitialMount.current = false
+      return
+    }
+    panelRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
+  }, [activeStageIdx])
 
   /* ---------- handlers ---------- */
 
@@ -249,25 +261,27 @@ export function OnboardingJourney() {
           />
 
           {/* Active stage panel */}
-          <ActiveStagePanel
-            stage={activeStage}
-            stageIdx={activeStageIdx}
-            total={stages.length}
-            agents={activeStageAgents}
-            palette={palette}
-            onPrev={() =>
-              setActiveStageIdx((i) => Math.max(0, i - 1))
-            }
-            onNext={() =>
-              setActiveStageIdx((i) => Math.min(stages.length - 1, i + 1))
-            }
-            onAddAgent={() =>
-              openAdd({ scope: "stage", stageId: activeStage.id })
-            }
-            onAgentClick={openAgentSheet}
-            onProcessClick={(p) => openProcessSheet(p, activeStage.name)}
-            onBuildAgent={buildAgentFromProcess}
-          />
+          <div ref={panelRef} className="scroll-mt-4">
+            <ActiveStagePanel
+              stage={activeStage}
+              stageIdx={activeStageIdx}
+              total={stages.length}
+              agents={activeStageAgents}
+              palette={palette}
+              onPrev={() =>
+                setActiveStageIdx((i) => Math.max(0, i - 1))
+              }
+              onNext={() =>
+                setActiveStageIdx((i) => Math.min(stages.length - 1, i + 1))
+              }
+              onAddAgent={() =>
+                openAdd({ scope: "stage", stageId: activeStage.id })
+              }
+              onAgentClick={openAgentSheet}
+              onProcessClick={(p) => openProcessSheet(p, activeStage.name)}
+              onBuildAgent={buildAgentFromProcess}
+            />
+          </div>
 
           {/* Common Reusable Agent Layer */}
           <CommonAgentLayer
