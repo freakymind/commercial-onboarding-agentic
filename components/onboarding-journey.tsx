@@ -851,7 +851,7 @@ function ActiveStagePanel({
               No agents yet — add the first one
             </button>
           ) : (
-            <div className="grid gap-2.5 sm:grid-cols-2">
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
               {agents.map((a, i) => (
                 <AgentCard
                   key={a.id}
@@ -1074,7 +1074,7 @@ function AgentCard({
     <button
       type="button"
       onClick={onClick}
-      className="group animate-draw-in agent-border-trace relative w-full overflow-hidden rounded-xl border bg-card p-3 text-left shadow-xs transition hover:-translate-y-0.5 hover:shadow-md focus:outline-none focus-visible:ring-2"
+      className="group animate-draw-in agent-border-trace relative w-full min-w-0 overflow-hidden rounded-xl border bg-card p-3 text-left shadow-xs transition hover:-translate-y-0.5 hover:shadow-md focus:outline-none focus-visible:ring-2"
       style={
         {
           animationDelay: `${animationDelay}ms`,
