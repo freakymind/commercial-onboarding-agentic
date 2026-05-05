@@ -7,9 +7,11 @@ import {
   CheckCircle2,
   ChevronRight,
   Cog,
+  Cpu,
   FileText,
   Fingerprint,
   Layers,
+  Lightbulb,
   Plus,
   Radar,
   ScanSearch,
@@ -17,6 +19,7 @@ import {
   ShieldCheck,
   Sparkles,
   TrendingUp,
+  User,
   Users,
   Wallet,
 } from "lucide-react"
@@ -34,11 +37,16 @@ import {
   initialAgents,
   initialStages,
   maturityDescriptions,
+  Process,
   Stage,
   ThemePalette,
 } from "@/lib/journey-data"
 import { AgentDialog } from "@/components/agent-dialog"
 import { ThemeCustomizer } from "@/components/theme-customizer"
+import {
+  AgentDetailSheet,
+  ProcessDetailSheet,
+} from "@/components/detail-sheet"
 
 const stageIcons: Record<string, React.ComponentType<{ className?: string }>> = {
   "stage-1": FileText,
@@ -64,9 +72,17 @@ export function OnboardingJourney() {
   const [agents, setAgents] = useState<Agent[]>(initialAgents)
   const [palette, setPalette] = useState<ThemePalette>(defaultPalette)
 
+  // Edit / add dialog
   const [dialogOpen, setDialogOpen] = useState(false)
   const [dialogMode, setDialogMode] = useState<"add" | "edit">("add")
   const [dialogInitial, setDialogInitial] = useState<Partial<Agent> | undefined>()
+
+  // Detail sheets
+  const [activeAgent, setActiveAgent] = useState<Agent | null>(null)
+  const [agentSheetOpen, setAgentSheetOpen] = useState(false)
+  const [activeProcess, setActiveProcess] = useState<Process | null>(null)
+  const [activeProcessStage, setActiveProcessStage] = useState<string | undefined>()
+  const [processSheetOpen, setProcessSheetOpen] = useState(false)
 
   const commonAgents = useMemo(
     () => agents.filter((a) => a.scope === "common"),
@@ -83,6 +99,8 @@ export function OnboardingJourney() {
     }
     return map
   }, [agents])
+
+  /* ---------- handlers ---------- */
 
   const openAdd = (preset?: Partial<Agent>) => {
     setDialogMode("add")
@@ -107,7 +125,16 @@ export function OnboardingJourney() {
     setAgents((prev) => prev.filter((a) => a.id !== id))
   }
 
-  // CSS variable style object so children can read theme tokens
+  const openAgentSheet = (a: Agent) => {
+    setActiveAgent(a)
+    setAgentSheetOpen(true)
+  }
+  const openProcessSheet = (p: Process, stageName?: string) => {
+    setActiveProcess(p)
+    setActiveProcessStage(stageName)
+    setProcessSheetOpen(true)
+  }
+
   const themeStyle = {
     ["--c-primary" as string]: palette.primary,
     ["--c-accent" as string]: palette.accent,
@@ -126,15 +153,23 @@ export function OnboardingJourney() {
             <div className="max-w-3xl space-y-3">
               <div className="flex items-center gap-2">
                 <span
-                  className="inline-flex size-8 items-center justify-center rounded-md text-white shadow-sm"
-                  style={{ background: `linear-gradient(135deg, ${palette.primary}, ${palette.accent})` }}
+                  className="inline-flex size-8 items-center justify-center rounded-md text-white shadow-sm animate-glow-pulse"
+                  style={
+                    {
+                      background: `linear-gradient(135deg, ${palette.primary}, ${palette.accent})`,
+                      ["--glow-color" as string]: hexToRgba(palette.primary, 0.5),
+                    } as React.CSSProperties
+                  }
                 >
                   <Sparkles className="size-4" />
                 </span>
                 <Badge
                   variant="outline"
                   className="border-current text-xs font-medium"
-                  style={{ color: palette.primary, borderColor: hexToRgba(palette.primary, 0.3) }}
+                  style={{
+                    color: palette.primary,
+                    borderColor: hexToRgba(palette.primary, 0.3),
+                  }}
                 >
                   Agentic Operating Model
                 </Badge>
@@ -144,9 +179,9 @@ export function OnboardingJourney() {
                 <span className="text-foreground">with Embedded AI Agents</span>
               </h1>
               <p className="text-pretty text-base leading-relaxed text-muted-foreground sm:text-lg">
-                From manual process steps to reusable, governed agentic capabilities across
-                onboarding — a board-ready view of where humans, controls and AI agents
-                collaborate.
+                Agents lead each stage. Tap any agent or process card to inspect its work,
+                inputs and outputs — and see how every remaining human step can be
+                accelerated by a purpose-built agent.
               </p>
             </div>
 
@@ -169,7 +204,7 @@ export function OnboardingJourney() {
 
           {/* Stages */}
           <section className="mt-8">
-            <div className="grid gap-x-4 gap-y-8 [grid-template-columns:repeat(auto-fit,minmax(300px,1fr))]">
+            <div className="grid gap-x-4 gap-y-8 [grid-template-columns:repeat(auto-fit,minmax(320px,1fr))]">
               {stages.map((stage, idx) => (
                 <StageCard
                   key={stage.id}
@@ -179,7 +214,8 @@ export function OnboardingJourney() {
                   agents={stageAgents.get(stage.id) ?? []}
                   palette={palette}
                   onAddAgent={() => openAdd({ scope: "stage", stageId: stage.id })}
-                  onEditAgent={openEdit}
+                  onAgentClick={openAgentSheet}
+                  onProcessClick={(p) => openProcessSheet(p, stage.name)}
                 />
               ))}
               <OnboardedCard palette={palette} delay={stages.length} />
@@ -191,7 +227,7 @@ export function OnboardingJourney() {
             agents={commonAgents}
             palette={palette}
             onAdd={() => openAdd({ scope: "common" })}
-            onEdit={openEdit}
+            onAgentClick={openAgentSheet}
           />
 
           {/* Maturity model */}
@@ -202,7 +238,7 @@ export function OnboardingJourney() {
               {agents.length} agents · {stages.length} stages · Theme:{" "}
               <span className="font-medium text-foreground">{palette.name}</span>
             </span>
-            <span>Tap any agent card to edit, or use Add agent to extend the model.</span>
+            <span>Tap any agent or process card to see its details and blueprint.</span>
           </footer>
         </div>
 
@@ -215,19 +251,57 @@ export function OnboardingJourney() {
           onSave={saveAgent}
           onDelete={deleteAgent}
         />
+
+        <AgentDetailSheet
+          agent={activeAgent}
+          open={agentSheetOpen}
+          onOpenChange={setAgentSheetOpen}
+          palette={palette}
+          onEdit={(a) => {
+            setAgentSheetOpen(false)
+            setTimeout(() => openEdit(a), 150)
+          }}
+        />
+
+        <ProcessDetailSheet
+          process={activeProcess}
+          stageName={activeProcessStage}
+          open={processSheetOpen}
+          onOpenChange={setProcessSheetOpen}
+          palette={palette}
+          onBuildAgent={(p) => {
+            setProcessSheetOpen(false)
+            // Pre-fill new agent dialog from blueprint summary
+            const stageId = stages.find((s) => s.processes.some((pp) => pp.id === p.id))?.id
+            setTimeout(
+              () =>
+                openAdd({
+                  scope: "stage",
+                  stageId,
+                  name: `${p.name} Agent`,
+                  function: p.agentBlueprint?.summary,
+                  maturity: p.agentBlueprint?.targetMaturity,
+                }),
+              150,
+            )
+          }}
+        />
       </div>
     </TooltipProvider>
   )
 }
 
-/* ---------- Legend ---------- */
+/* -------------------------------------------------------------------------- */
+/*  Legend                                                                     */
+/* -------------------------------------------------------------------------- */
 
 function Legend({ palette }: { palette: ThemePalette }) {
   const items = [
+    { color: palette.stage, label: "Stage-specific agent" },
+    { color: palette.common, label: "Common reusable agent" },
     { color: palette.agentic, label: "Agentic-enhanced process" },
     { color: palette.human, label: "Human / control process" },
-    { color: palette.common, label: "Common reusable agents" },
-    { color: palette.stage, label: "Stage-specific agents" },
+    { color: palette.accent, label: "Agent build opportunity", glow: true },
     { color: palette.primary, label: "Onboarding journey flow", arrow: true },
   ]
   return (
@@ -239,6 +313,13 @@ function Legend({ palette }: { palette: ThemePalette }) {
               className="inline-block h-[3px] w-7 rounded-full"
               style={{ background: it.color }}
             />
+          ) : it.glow ? (
+            <span
+              className="inline-flex size-3 items-center justify-center rounded-full"
+              style={{ background: it.color, boxShadow: `0 0 0 3px ${hexToRgba(it.color, 0.25)}` }}
+            >
+              <Lightbulb className="size-2 text-white" />
+            </span>
           ) : (
             <span
               className="inline-block size-3 rounded-sm"
@@ -252,7 +333,9 @@ function Legend({ palette }: { palette: ThemePalette }) {
   )
 }
 
-/* ---------- Stage card ---------- */
+/* -------------------------------------------------------------------------- */
+/*  Stage card                                                                 */
+/* -------------------------------------------------------------------------- */
 
 function StageCard({
   stage,
@@ -261,7 +344,8 @@ function StageCard({
   agents,
   palette,
   onAddAgent,
-  onEditAgent,
+  onAgentClick,
+  onProcessClick,
 }: {
   stage: Stage
   index: number
@@ -269,20 +353,27 @@ function StageCard({
   agents: Agent[]
   palette: ThemePalette
   onAddAgent: () => void
-  onEditAgent: (a: Agent) => void
+  onAgentClick: (a: Agent) => void
+  onProcessClick: (p: Process) => void
 }) {
   const Icon = stageIcons[stage.id] ?? Cog
   const last = index === total - 1
 
+  const humanCount = stage.processes.filter((p) => p.type === "human").length
+  const agenticCount = stage.processes.filter((p) => p.type === "agentic").length
+
   return (
     <div
-      className="animate-draw-in relative flex flex-col"
-      style={{ animationDelay: `${index * 70}ms` }}
+      className="animate-draw-in relative flex flex-col rounded-2xl border bg-card/60 p-4 shadow-xs backdrop-blur-sm transition hover:shadow-md"
+      style={{
+        animationDelay: `${index * 70}ms`,
+        borderColor: hexToRgba(palette.primary, 0.15),
+      }}
     >
-      {/* Connector arrow to next stage (desktop only) */}
+      {/* Connector arrow with moving particle */}
       {!last && <Connector palette={palette} />}
 
-      {/* Header with number + icon */}
+      {/* Header: Stage number + icon */}
       <div className="flex items-center gap-3">
         <div className="relative">
           <span
@@ -299,8 +390,8 @@ function StageCard({
             {stage.number}
           </span>
         </div>
-        <div className="min-w-0">
-          <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+        <div className="min-w-0 flex-1">
+          <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
             Stage {stage.number}
           </p>
           <h3 className="text-base font-semibold leading-tight">
@@ -312,58 +403,74 @@ function StageCard({
         </div>
       </div>
 
-      {/* Processes */}
-      <div className="mt-4 flex flex-col gap-2">
-        {stage.processes.map((p) => {
-          const isAgentic = p.type === "agentic"
-          const color = isAgentic ? palette.agentic : palette.human
-          return (
-            <div
-              key={p.id}
-              className="group flex items-center gap-2 rounded-lg border bg-card px-3 py-2 text-sm shadow-xs transition hover:-translate-y-px hover:shadow-sm"
-              style={{
-                borderColor: hexToRgba(color, 0.35),
-                background: `linear-gradient(180deg, ${hexToRgba(color, 0.08)}, transparent)`,
-              }}
-            >
-              <span
-                className="size-2 shrink-0 rounded-full"
-                style={{ background: color, boxShadow: `0 0 0 3px ${hexToRgba(color, 0.18)}` }}
-              />
-              <span className="flex-1 leading-tight">{p.name}</span>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <span
-                    className="text-[10px] font-medium uppercase tracking-wide"
-                    style={{ color }}
-                  >
-                    {isAgentic ? "Agentic" : "Human"}
-                  </span>
-                </TooltipTrigger>
-                <TooltipContent>
-                  {isAgentic
-                    ? "Agentic-enhanced process — AI assists or executes"
-                    : "Human / control process"}
-                </TooltipContent>
-              </Tooltip>
-            </div>
-          )
-        })}
+      {/* Stage stats */}
+      <div className="mt-3 flex items-center gap-1.5">
+        <Badge
+          variant="outline"
+          className="gap-1 px-1.5 py-0 text-[10px] font-medium"
+          style={{
+            color: palette.stage,
+            borderColor: hexToRgba(palette.stage, 0.4),
+            background: hexToRgba(palette.stage, 0.06),
+          }}
+        >
+          <Bot className="size-3" />
+          {agents.length} agents
+        </Badge>
+        {agenticCount > 0 && (
+          <Badge
+            variant="outline"
+            className="gap-1 px-1.5 py-0 text-[10px] font-medium"
+            style={{
+              color: palette.agentic,
+              borderColor: hexToRgba(palette.agentic, 0.4),
+              background: hexToRgba(palette.agentic, 0.06),
+            }}
+          >
+            <Cpu className="size-3" />
+            {agenticCount} agentic
+          </Badge>
+        )}
+        {humanCount > 0 && (
+          <Badge
+            variant="outline"
+            className="gap-1 px-1.5 py-0 text-[10px] font-medium"
+            style={{
+              color: palette.human,
+              borderColor: hexToRgba(palette.human, 0.4),
+              background: hexToRgba(palette.human, 0.06),
+            }}
+          >
+            <User className="size-3" />
+            {humanCount} human
+          </Badge>
+        )}
       </div>
 
-      {/* Stage agents */}
+      {/* AGENTS first */}
       <div className="mt-4 space-y-2">
         <div className="flex items-center justify-between">
-          <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-            Stage agents
-          </p>
+          <div className="flex items-center gap-1.5">
+            <span
+              className="flex size-4 items-center justify-center rounded text-white"
+              style={{ background: palette.stage }}
+            >
+              <Bot className="size-2.5" />
+            </span>
+            <p
+              className="text-[10px] font-semibold uppercase tracking-wider"
+              style={{ color: palette.stage }}
+            >
+              Stage agents
+            </p>
+          </div>
           <Button
             variant="ghost"
             size="sm"
-            className="h-7 gap-1 px-2 text-xs"
+            className="h-6 gap-1 px-1.5 text-[11px]"
             onClick={onAddAgent}
           >
-            <Plus className="size-3.5" />
+            <Plus className="size-3" />
             Add
           </Button>
         </div>
@@ -378,64 +485,194 @@ function StageCard({
           </button>
         ) : (
           <div className="flex flex-col gap-2">
-            {agents.map((a) => (
-              <AgentCard key={a.id} agent={a} palette={palette} onClick={() => onEditAgent(a)} />
+            {agents.map((a, i) => (
+              <AgentCard
+                key={a.id}
+                agent={a}
+                palette={palette}
+                onClick={() => onAgentClick(a)}
+                animationDelay={i * 60}
+              />
             ))}
           </div>
         )}
+      </div>
+
+      {/* Process steps below */}
+      <div className="mt-4 space-y-2">
+        <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+          Process steps
+        </p>
+        <div className="flex flex-col gap-1.5">
+          {stage.processes.map((p, i) => (
+            <ProcessRow
+              key={p.id}
+              process={p}
+              palette={palette}
+              onClick={() => onProcessClick(p)}
+              animationDelay={i * 50}
+            />
+          ))}
+        </div>
       </div>
     </div>
   )
 }
 
-/* ---------- Connector arrow (between stage cards) ---------- */
+/* -------------------------------------------------------------------------- */
+/*  Process row (clickable)                                                    */
+/* -------------------------------------------------------------------------- */
+
+function ProcessRow({
+  process,
+  palette,
+  onClick,
+  animationDelay = 0,
+}: {
+  process: Process
+  palette: ThemePalette
+  onClick: () => void
+  animationDelay?: number
+}) {
+  const isAgentic = process.type === "agentic"
+  const color = isAgentic ? palette.agentic : palette.human
+  const hasBlueprint = process.type === "human" && !!process.agentBlueprint
+
+  return (
+    <button
+      onClick={onClick}
+      className="group animate-draw-in relative flex items-center gap-2 overflow-hidden rounded-lg border bg-card px-2.5 py-2 text-left text-[13px] shadow-xs transition hover:-translate-y-px hover:shadow-md focus:outline-none focus-visible:ring-2"
+      style={{
+        animationDelay: `${animationDelay}ms`,
+        borderColor: hexToRgba(color, 0.35),
+        background: `linear-gradient(180deg, ${hexToRgba(color, 0.06)}, transparent)`,
+      }}
+    >
+      {/* Animated scan line for agentic */}
+      {isAgentic && (
+        <span
+          aria-hidden
+          className="pointer-events-none absolute inset-x-0 top-0 h-[2px] animate-scan-line"
+          style={{
+            background: `linear-gradient(90deg, transparent, ${color}, transparent)`,
+          }}
+        />
+      )}
+
+      <span
+        className="size-2 shrink-0 rounded-full"
+        style={{
+          background: color,
+          boxShadow: `0 0 0 3px ${hexToRgba(color, 0.18)}`,
+        }}
+      />
+
+      <span className="flex-1 leading-tight">{process.name}</span>
+
+      {hasBlueprint && (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <span
+              className="inline-flex size-5 items-center justify-center rounded-full text-white animate-glow-pulse"
+              style={
+                {
+                  background: palette.accent,
+                  ["--glow-color" as string]: hexToRgba(palette.accent, 0.5),
+                } as React.CSSProperties
+              }
+              aria-label="Agent build opportunity"
+            >
+              <Lightbulb className="size-3" />
+            </span>
+          </TooltipTrigger>
+          <TooltipContent>Agent build opportunity — tap to see blueprint</TooltipContent>
+        </Tooltip>
+      )}
+
+      <span
+        className="text-[10px] font-semibold uppercase tracking-wider opacity-80"
+        style={{ color }}
+      >
+        {isAgentic ? "Agentic" : "Human"}
+      </span>
+
+      <ChevronRight
+        className="size-3.5 shrink-0 text-muted-foreground transition group-hover:translate-x-0.5"
+        style={{ color: hexToRgba(color, 0.7) }}
+      />
+    </button>
+  )
+}
+
+/* -------------------------------------------------------------------------- */
+/*  Connector with moving particle                                             */
+/* -------------------------------------------------------------------------- */
 
 function Connector({ palette }: { palette: ThemePalette }) {
-  // Visible on large screens only — points from this card to the next.
   return (
     <div
       aria-hidden
-      className="pointer-events-none absolute -right-2 top-4 z-10 hidden lg:block"
+      className="pointer-events-none absolute -right-2 top-6 z-10 hidden lg:block"
     >
-      <svg width="28" height="14" viewBox="0 0 28 14">
-        <line
-          x1="0"
-          y1="7"
-          x2="20"
-          y2="7"
-          stroke={palette.primary}
-          strokeWidth="2.5"
-          strokeLinecap="round"
-          strokeDasharray="4 4"
-          className="animate-flow-dash"
+      <div className="relative h-3 w-7">
+        <svg width="28" height="14" viewBox="0 0 28 14" className="absolute inset-0">
+          <line
+            x1="0"
+            y1="7"
+            x2="20"
+            y2="7"
+            stroke={palette.primary}
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            strokeDasharray="4 4"
+            className="animate-flow-dash"
+          />
+          <path d="M20 1 L28 7 L20 13 Z" fill={palette.primary} />
+        </svg>
+        {/* Moving particle */}
+        <span
+          className="absolute left-0 top-1/2 size-1.5 -translate-y-1/2 rounded-full animate-connector-particle"
+          style={{
+            background: palette.accent,
+            boxShadow: `0 0 6px ${palette.accent}`,
+          }}
         />
-        <path d="M20 1 L28 7 L20 13 Z" fill={palette.primary} />
-      </svg>
+      </div>
     </div>
   )
 }
 
-/* ---------- Agent card ---------- */
+/* -------------------------------------------------------------------------- */
+/*  Agent card                                                                 */
+/* -------------------------------------------------------------------------- */
 
 function AgentCard({
   agent,
   palette,
   onClick,
   variant = "stage",
+  animationDelay = 0,
 }: {
   agent: Agent
   palette: ThemePalette
   onClick: () => void
   variant?: "stage" | "common"
+  animationDelay?: number
 }) {
   const baseColor = agent.color || (variant === "common" ? palette.common : palette.stage)
   return (
     <button
       onClick={onClick}
-      className="group relative w-full overflow-hidden rounded-xl border bg-card p-3 text-left shadow-xs transition hover:-translate-y-0.5 hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
-      style={{
-        borderColor: hexToRgba(baseColor, 0.35),
-      }}
+      className="group animate-draw-in agent-border-trace relative w-full overflow-hidden rounded-xl border bg-card p-3 text-left shadow-xs transition hover:-translate-y-0.5 hover:shadow-md focus:outline-none"
+      style={
+        {
+          animationDelay: `${animationDelay}ms`,
+          borderColor: hexToRgba(baseColor, 0.35),
+          ["--trace-color" as string]: baseColor,
+          ["--trace-color-2" as string]:
+            variant === "common" ? palette.primary : palette.accent,
+        } as React.CSSProperties
+      }
     >
       <span
         aria-hidden
@@ -449,16 +686,18 @@ function AgentCard({
       />
       <div className="flex items-start gap-2.5">
         <span
-          className="flex size-8 shrink-0 items-center justify-center rounded-lg text-white shadow-sm"
+          className="relative flex size-8 shrink-0 items-center justify-center rounded-lg text-white shadow-sm"
           style={{ background: baseColor }}
         >
-          <Bot className="size-4" />
+          <Bot className="size-4 animate-tick-rotate" />
         </span>
         <div className="min-w-0 flex-1">
           <div className="flex items-center justify-between gap-2">
-            <p className="truncate text-[13px] font-semibold leading-tight">{agent.name}</p>
+            <p className="truncate text-[13px] font-semibold leading-tight">
+              {agent.name}
+            </p>
             <span
-              className="shrink-0 rounded-full border px-1.5 py-0.5 font-mono text-[10px] font-semibold"
+              className="shrink-0 rounded-full border px-1.5 py-0.5 font-mono text-[10px] font-semibold animate-badge-pulse"
               style={{
                 color: baseColor,
                 borderColor: hexToRgba(baseColor, 0.4),
@@ -468,9 +707,18 @@ function AgentCard({
               {agent.maturity}
             </span>
           </div>
-          <p className="mt-1 line-clamp-3 text-[11px] leading-snug text-muted-foreground">
+          <p className="mt-1 line-clamp-2 text-[11px] leading-snug text-muted-foreground">
             {agent.function}
           </p>
+          {agent.tasks && agent.tasks.length > 0 && (
+            <p
+              className="mt-1.5 inline-flex items-center gap-1 text-[10px] font-medium"
+              style={{ color: baseColor }}
+            >
+              <Sparkles className="size-2.5" />
+              {agent.tasks.length} agent tasks · view details
+            </p>
+          )}
         </div>
       </div>
       <div className="absolute right-2 top-2 opacity-0 transition group-hover:opacity-100">
@@ -480,7 +728,9 @@ function AgentCard({
   )
 }
 
-/* ---------- Onboarded customer end card ---------- */
+/* -------------------------------------------------------------------------- */
+/*  Onboarded customer end card                                                */
+/* -------------------------------------------------------------------------- */
 
 function OnboardedCard({ palette, delay }: { palette: ThemePalette; delay: number }) {
   return (
@@ -524,7 +774,7 @@ function OnboardedCard({ palette, delay }: { palette: ThemePalette; delay: numbe
           Customer ready for relationship activation
         </p>
         <Badge
-          className="border-transparent text-[10px] font-medium uppercase tracking-wider text-white"
+          className="border-transparent text-[10px] font-medium uppercase tracking-wider text-white animate-badge-pulse"
           style={{ background: palette.primary }}
         >
           Activated
@@ -534,28 +784,33 @@ function OnboardedCard({ palette, delay }: { palette: ThemePalette; delay: numbe
   )
 }
 
-/* ---------- Common reusable agent layer ---------- */
+/* -------------------------------------------------------------------------- */
+/*  Common reusable agent layer                                                */
+/* -------------------------------------------------------------------------- */
 
 function CommonAgentLayer({
   agents,
   palette,
   onAdd,
-  onEdit,
+  onAgentClick,
 }: {
   agents: Agent[]
   palette: ThemePalette
   onAdd: () => void
-  onEdit: (a: Agent) => void
+  onAgentClick: (a: Agent) => void
 }) {
   return (
     <section
-      className="relative mt-12 overflow-hidden rounded-2xl border-2 p-5 shadow-sm sm:p-6"
+      className="layer-flow-bg relative mt-12 overflow-hidden rounded-2xl border-2 p-5 shadow-sm sm:p-6"
       style={{
         borderColor: hexToRgba(palette.common, 0.4),
-        background: `linear-gradient(120deg, ${hexToRgba(palette.common, 0.1)} 0%, ${hexToRgba(
+        backgroundImage: `linear-gradient(120deg, ${hexToRgba(
           palette.common,
-          0.03,
-        )} 60%, transparent 100%)`,
+          0.14,
+        )} 0%, ${hexToRgba(palette.common, 0.04)} 50%, ${hexToRgba(
+          palette.common,
+          0.12,
+        )} 100%)`,
       }}
     >
       <div
@@ -564,11 +819,32 @@ function CommonAgentLayer({
         style={{ background: palette.common }}
       />
 
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+      {/* Animated data-flow particles */}
+      <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
+        {[10, 30, 55, 75, 90].map((leftPct, i) => (
+          <span
+            key={i}
+            className="absolute -top-1 size-1 rounded-full animate-data-flow"
+            style={{
+              left: `${leftPct}%`,
+              background: palette.common,
+              boxShadow: `0 0 4px ${palette.common}`,
+              animationDelay: `${i * 0.35}s`,
+            }}
+          />
+        ))}
+      </div>
+
+      <div className="relative flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div className="flex items-start gap-3">
           <span
-            className="flex size-10 items-center justify-center rounded-xl text-white shadow-md"
-            style={{ background: palette.common }}
+            className="flex size-10 items-center justify-center rounded-xl text-white shadow-md animate-glow-pulse"
+            style={
+              {
+                background: palette.common,
+                ["--glow-color" as string]: hexToRgba(palette.common, 0.5),
+              } as React.CSSProperties
+            }
           >
             <Layers className="size-5" />
           </span>
@@ -600,15 +876,16 @@ function CommonAgentLayer({
         </Button>
       </div>
 
-      <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="relative mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {agents.map((a, i) => (
-          <div
+          <AgentCard
             key={a.id}
-            className="animate-draw-in"
-            style={{ animationDelay: `${i * 60}ms` }}
-          >
-            <AgentCard agent={a} palette={palette} onClick={() => onEdit(a)} variant="common" />
-          </div>
+            agent={a}
+            palette={palette}
+            onClick={() => onAgentClick(a)}
+            variant="common"
+            animationDelay={i * 60}
+          />
         ))}
         {agents.length === 0 && (
           <button
@@ -622,7 +899,7 @@ function CommonAgentLayer({
       </div>
 
       {/* Reusable across stages indicator */}
-      <div className="mt-5 flex items-center gap-2 text-xs text-muted-foreground">
+      <div className="relative mt-5 flex items-center gap-2 text-xs text-muted-foreground">
         <span className="font-medium" style={{ color: palette.common }}>
           Reusable across:
         </span>
@@ -647,7 +924,9 @@ function CommonAgentLayer({
   )
 }
 
-/* ---------- Maturity model ---------- */
+/* -------------------------------------------------------------------------- */
+/*  Maturity model                                                             */
+/* -------------------------------------------------------------------------- */
 
 function MaturityModel({ palette }: { palette: ThemePalette }) {
   const levels = Object.keys(maturityDescriptions) as Array<keyof typeof maturityDescriptions>

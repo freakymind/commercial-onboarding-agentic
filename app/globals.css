@@ -225,3 +225,155 @@
     radial-gradient(circle at 1px 1px, rgba(90, 40, 125, 0.08) 1px, transparent 0);
   background-size: 24px 24px;
 }
+
+/* ---------- Movement / motion ---------- */
+
+@keyframes connector-particle {
+  0% {
+    transform: translateX(0) scale(0.6);
+    opacity: 0;
+  }
+  20% {
+    opacity: 1;
+    transform: translateX(20%) scale(1);
+  }
+  80% {
+    opacity: 1;
+    transform: translateX(80%) scale(1);
+  }
+  100% {
+    transform: translateX(100%) scale(0.6);
+    opacity: 0;
+  }
+}
+.animate-connector-particle {
+  animation: connector-particle 1.8s linear infinite;
+}
+
+@keyframes glow-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 var(--glow-color, rgba(90, 40, 125, 0.45));
+  }
+  50% {
+    box-shadow: 0 0 0 6px transparent;
+  }
+}
+.animate-glow-pulse {
+  animation: glow-pulse 2s ease-in-out infinite;
+}
+
+@keyframes border-trace {
+  0% {
+    background-position: 0% 0%;
+  }
+  100% {
+    background-position: 200% 0%;
+  }
+}
+.agent-border-trace {
+  position: relative;
+  background-clip: padding-box;
+}
+.agent-border-trace::before {
+  content: '';
+  position: absolute;
+  inset: -1.5px;
+  border-radius: inherit;
+  padding: 1.5px;
+  background: linear-gradient(
+    90deg,
+    var(--trace-color, #5a287d) 0%,
+    var(--trace-color-2, #bd0f72) 35%,
+    transparent 60%,
+    var(--trace-color, #5a287d) 100%
+  );
+  background-size: 200% 100%;
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  animation: border-trace 3.5s linear infinite;
+  pointer-events: none;
+  opacity: 0.85;
+}
+
+@keyframes data-flow {
+  0% {
+    transform: translateY(-6px);
+    opacity: 0;
+  }
+  20% {
+    opacity: 1;
+  }
+  80% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(40px);
+    opacity: 0;
+  }
+}
+.animate-data-flow {
+  animation: data-flow 1.6s linear infinite;
+}
+
+@keyframes scan-line {
+  0% {
+    transform: translateY(0);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+}
+.animate-scan-line {
+  animation: scan-line 2.4s ease-in-out infinite;
+}
+
+@keyframes badge-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.06);
+  }
+}
+.animate-badge-pulse {
+  animation: badge-pulse 2.2s ease-in-out infinite;
+}
+
+@keyframes tick-rotate {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+.animate-tick-rotate {
+  animation: tick-rotate 14s linear infinite;
+}
+
+/* Reusable layer flowing background */
+@keyframes layer-shimmer {
+  0% {
+    background-position: 0% 50%;
+  }
+  100% {
+    background-position: 200% 50%;
+  }
+}
+.layer-flow-bg {
+  background-size: 200% 100%;
+  animation: layer-shimmer 12s linear infinite;
+}

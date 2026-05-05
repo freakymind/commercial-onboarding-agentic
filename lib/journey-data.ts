@@ -4,6 +4,16 @@ export type Process = {
   id: string
   name: string
   type: ProcessType
+  /** What happens in this process step (analyst / system view) */
+  description?: string
+  /** For human steps: how an agent could be built to support / replace this work */
+  agentBlueprint?: {
+    summary: string
+    capabilities: string[]
+    inputs: string[]
+    risks: string[]
+    targetMaturity: MaturityLevel
+  }
 }
 
 export type MaturityLevel = "L1" | "L2" | "L3" | "L4" | "L5"
@@ -15,7 +25,13 @@ export type Agent = {
   scope: "common" | "stage"
   stageId?: string
   maturity: MaturityLevel
-  color?: string // optional per-agent color override
+  color?: string
+  /** Bullet list of what this agent actually does, step by step */
+  tasks?: string[]
+  /** Data, evidence and systems the agent reads from */
+  inputs?: string[]
+  /** Outputs / artefacts produced for the analyst or case */
+  outputs?: string[]
 }
 
 export type Stage = {
@@ -25,14 +41,30 @@ export type Stage = {
   processes: Process[]
 }
 
+/* -------------------------------------------------------------------------- */
+/*  Stages                                                                     */
+/* -------------------------------------------------------------------------- */
+
 export const initialStages: Stage[] = [
   {
     id: "stage-1",
     number: 1,
     name: "Application Submission",
     processes: [
-      { id: "p-1-1", name: "Customer & Ops Comms", type: "human" },
-      { id: "p-1-2", name: "Case Allocation & Escalations", type: "human" },
+      {
+        id: "p-1-1",
+        name: "Customer & Ops Comms",
+        type: "agentic",
+        description:
+          "All inbound and outbound communications between the customer and the onboarding ops team — emails, chat, document requests, status updates.",
+      },
+      {
+        id: "p-1-2",
+        name: "Case Allocation & Escalations",
+        type: "agentic",
+        description:
+          "Routing of new cases to the right analyst pool and escalating stuck or high-risk cases to the right reviewer or queue.",
+      },
     ],
   },
   {
@@ -40,9 +72,37 @@ export const initialStages: Stage[] = [
     number: 2,
     name: "Identity Verification",
     processes: [
-      { id: "p-2-1", name: "Basic ID Verification", type: "agentic" },
-      { id: "p-2-2", name: "Proof of Address", type: "agentic" },
-      { id: "p-2-3", name: "Enhanced Identity Verification", type: "human" },
+      {
+        id: "p-2-1",
+        name: "Basic ID Verification",
+        type: "agentic",
+        description: "Document + biometric ID checks against trusted issuers and registries.",
+      },
+      {
+        id: "p-2-2",
+        name: "Proof of Address",
+        type: "agentic",
+        description: "Address validation against utility, government and credit bureau sources.",
+      },
+      {
+        id: "p-2-3",
+        name: "Enhanced Identity Verification",
+        type: "human",
+        description:
+          "High-risk identity scenarios — non-standard IDs, mismatches, manual KYC review.",
+        agentBlueprint: {
+          summary:
+            "Enhanced Identity Triage Agent that pre-investigates non-standard cases and prepares a recommendation pack for the analyst.",
+          capabilities: [
+            "Cross-reference ID across multiple bureaus and document libraries",
+            "Detect document tampering and synthetic identity patterns",
+            "Summarise mismatches with proposed resolution and confidence",
+          ],
+          inputs: ["ID documents", "Biometric capture", "Bureau & registry APIs", "Prior cases"],
+          risks: ["Synthetic identity", "Document fraud", "Sanctioned individual"],
+          targetMaturity: "L3",
+        },
+      },
     ],
   },
   {
@@ -50,9 +110,37 @@ export const initialStages: Stage[] = [
     number: 3,
     name: "Business Verification",
     processes: [
-      { id: "p-3-1", name: "Business Registration Documents", type: "agentic" },
-      { id: "p-3-2", name: "Company Structure Documentation", type: "agentic" },
-      { id: "p-3-3", name: "Business Plan Review", type: "human" },
+      {
+        id: "p-3-1",
+        name: "Business Registration Documents",
+        type: "agentic",
+        description: "Verifying company registration, certificates and trading status.",
+      },
+      {
+        id: "p-3-2",
+        name: "Company Structure Documentation",
+        type: "agentic",
+        description: "Extracting and validating articles, share register and structure docs.",
+      },
+      {
+        id: "p-3-3",
+        name: "Business Plan Review",
+        type: "human",
+        description:
+          "Analyst review of business model, expected activity and onboarding rationale.",
+        agentBlueprint: {
+          summary:
+            "Business Plan Review Agent that reads the plan, extracts the model, expected flows and sector risk, and produces a structured analyst brief.",
+          capabilities: [
+            "Extract business model, products and customer base from plan",
+            "Estimate expected turnover and transaction profile",
+            "Flag sector-specific risk indicators (cash, crypto, cross-border)",
+          ],
+          inputs: ["Business plan", "Website content", "Sector risk taxonomy", "Peer benchmarks"],
+          risks: ["Misstated activity", "High-risk sector", "Inconsistent expected flow"],
+          targetMaturity: "L3",
+        },
+      },
     ],
   },
   {
@@ -60,10 +148,43 @@ export const initialStages: Stage[] = [
     number: 4,
     name: "Ownership Structure",
     processes: [
-      { id: "p-4-1", name: "Simple Ownership Verification", type: "agentic" },
-      { id: "p-4-2", name: "Director Verification", type: "agentic" },
-      { id: "p-4-3", name: "Beneficial Owner Identification", type: "agentic" },
-      { id: "p-4-4", name: "Complex Ownership Structure Mapping", type: "human" },
+      {
+        id: "p-4-1",
+        name: "Simple Ownership Verification",
+        type: "agentic",
+        description: "Sole trader / single-owner ownership validation.",
+      },
+      {
+        id: "p-4-2",
+        name: "Director Verification",
+        type: "agentic",
+        description: "Director identity, history and risk pattern checks.",
+      },
+      {
+        id: "p-4-3",
+        name: "Beneficial Owner Identification",
+        type: "agentic",
+        description: "PSC / UBO identification and percentage ownership analysis.",
+      },
+      {
+        id: "p-4-4",
+        name: "Complex Ownership Structure Mapping",
+        type: "human",
+        description:
+          "Mapping layered entities, parent companies, trusts and cross-border structures.",
+        agentBlueprint: {
+          summary:
+            "Complex Ownership Mapping Agent that builds a graph of entities, owners and control links, and highlights opaque structures for the analyst.",
+          capabilities: [
+            "Build ownership graph from registries and filings",
+            "Highlight circular ownership, nominees and trust layers",
+            "Quantify control percentages and ultimate beneficial control",
+          ],
+          inputs: ["Registry filings", "Trust deeds", "Group structure charts", "Sanction lists"],
+          risks: ["Hidden UBO", "Sanctioned ownership", "Shell entity layering"],
+          targetMaturity: "L3",
+        },
+      },
     ],
   },
   {
@@ -71,11 +192,62 @@ export const initialStages: Stage[] = [
     number: 5,
     name: "Financial Due Diligence",
     processes: [
-      { id: "p-5-1", name: "Basic Credit Check", type: "agentic" },
-      { id: "p-5-2", name: "Cash Handling Assessment", type: "human" },
-      { id: "p-5-3", name: "Enhanced Source of Wealth Investigation", type: "human" },
-      { id: "p-5-4", name: "Source of Funds Verification", type: "agentic" },
-      { id: "p-5-5", name: "Company Financial Review", type: "agentic" },
+      {
+        id: "p-5-1",
+        name: "Basic Credit Check",
+        type: "agentic",
+        description: "Standard credit bureau lookups and scoring.",
+      },
+      {
+        id: "p-5-2",
+        name: "Cash Handling Assessment",
+        type: "human",
+        description:
+          "Analyst review of cash-intensive activity, expected volume and rationale.",
+        agentBlueprint: {
+          summary:
+            "Cash Activity Agent that estimates expected cash usage from sector, peers and declared activity, and produces a structured cash risk profile.",
+          capabilities: [
+            "Estimate expected cash ratio from sector and peers",
+            "Compare declared cash vs benchmark",
+            "Flag inconsistencies for analyst review",
+          ],
+          inputs: ["Sector benchmarks", "Customer declarations", "Peer transaction data"],
+          risks: ["Unjustified cash", "Sector misstatement"],
+          targetMaturity: "L2",
+        },
+      },
+      {
+        id: "p-5-3",
+        name: "Enhanced Source of Wealth Investigation",
+        type: "human",
+        description:
+          "Deep review of source of wealth for high-risk customers and PEPs.",
+        agentBlueprint: {
+          summary:
+            "Source of Wealth Investigation Agent that gathers evidence, reconstructs wealth narrative and surfaces gaps to the analyst.",
+          capabilities: [
+            "Reconstruct wealth narrative across years",
+            "Reconcile declared wealth with public evidence",
+            "Surface unexplained increments and missing evidence",
+          ],
+          inputs: ["Customer disclosures", "Public records", "Media", "Asset registries"],
+          risks: ["Unexplained wealth", "Tax evasion", "Corruption proceeds"],
+          targetMaturity: "L3",
+        },
+      },
+      {
+        id: "p-5-4",
+        name: "Source of Funds Verification",
+        type: "agentic",
+        description: "Verifying source of funds against declared evidence and expected flows.",
+      },
+      {
+        id: "p-5-5",
+        name: "Company Financial Review",
+        type: "agentic",
+        description: "Reading accounts, turnover and balance sheet indicators.",
+      },
     ],
   },
   {
@@ -83,12 +255,66 @@ export const initialStages: Stage[] = [
     number: 6,
     name: "Risk Assessment",
     processes: [
-      { id: "p-6-1", name: "Adverse Media Checks", type: "agentic" },
-      { id: "p-6-2", name: "Enhanced PEP Due Diligence", type: "human" },
-      { id: "p-6-3", name: "PEP Screening", type: "agentic" },
-      { id: "p-6-4", name: "Foreign Jurisdiction Risk Assessment", type: "human" },
-      { id: "p-6-5", name: "Sanctions Screening", type: "agentic" },
-      { id: "p-6-6", name: "Standard AML Risk Assessment", type: "agentic" },
+      {
+        id: "p-6-1",
+        name: "Adverse Media Checks",
+        type: "agentic",
+        description: "Adverse media search, summarisation and risk classification.",
+      },
+      {
+        id: "p-6-2",
+        name: "Enhanced PEP Due Diligence",
+        type: "human",
+        description: "Enhanced review of PEPs, role, jurisdiction and corruption exposure.",
+        agentBlueprint: {
+          summary:
+            "Enhanced PEP DD Agent that builds a full PEP profile, exposure analysis and recommended controls.",
+          capabilities: [
+            "Profile role, jurisdiction and tenure",
+            "Map associates and connected parties",
+            "Recommend EDD controls and ongoing monitoring",
+          ],
+          inputs: ["PEP databases", "Sanction lists", "Adverse media", "Government registries"],
+          risks: ["Bribery", "Sanctions exposure", "State capture"],
+          targetMaturity: "L3",
+        },
+      },
+      {
+        id: "p-6-3",
+        name: "PEP Screening",
+        type: "agentic",
+        description: "Initial PEP screening across global lists.",
+      },
+      {
+        id: "p-6-4",
+        name: "Foreign Jurisdiction Risk Assessment",
+        type: "human",
+        description: "Country / jurisdiction risk scoring with qualitative overlay.",
+        agentBlueprint: {
+          summary:
+            "Jurisdiction Risk Agent that combines country indices, sector exposure and entity footprint into a structured score with rationale.",
+          capabilities: [
+            "Combine FATF, Basel and corruption indices",
+            "Score entity footprint across jurisdictions",
+            "Surface red-flag jurisdictions with rationale",
+          ],
+          inputs: ["FATF / Basel data", "Entity footprint", "Sanction maps"],
+          risks: ["High-risk jurisdiction", "Sanctioned territory"],
+          targetMaturity: "L3",
+        },
+      },
+      {
+        id: "p-6-5",
+        name: "Sanctions Screening",
+        type: "agentic",
+        description: "Sanctions screening, false-positive triage and evidence trail.",
+      },
+      {
+        id: "p-6-6",
+        name: "Standard AML Risk Assessment",
+        type: "agentic",
+        description: "Aggregating risk factors into the AML risk view.",
+      },
     ],
   },
   {
@@ -96,21 +322,59 @@ export const initialStages: Stage[] = [
     number: 7,
     name: "Transaction Monitoring",
     processes: [
-      { id: "p-7-1", name: "Standard Monitoring", type: "agentic" },
-      { id: "p-7-2", name: "Enhanced Monitoring", type: "human" },
-      { id: "p-7-3", name: "Foreign Transaction Monitoring", type: "agentic" },
+      {
+        id: "p-7-1",
+        name: "Standard Monitoring",
+        type: "agentic",
+        description: "Baseline transaction monitoring against expected behaviour.",
+      },
+      {
+        id: "p-7-2",
+        name: "Enhanced Monitoring",
+        type: "human",
+        description: "Analyst-led enhanced monitoring for high-risk customers.",
+        agentBlueprint: {
+          summary:
+            "Enhanced Monitoring Agent that prioritises alerts, links related cases and prepares an investigation pack.",
+          capabilities: [
+            "Cluster related alerts and entities",
+            "Score alert severity with explainability",
+            "Prepare investigation pack with timeline",
+          ],
+          inputs: ["Alert engine", "KYC profile", "Network graph", "External signals"],
+          risks: ["Layering", "Smurfing", "Shell-company flow"],
+          targetMaturity: "L4",
+        },
+      },
+      {
+        id: "p-7-3",
+        name: "Foreign Transaction Monitoring",
+        type: "agentic",
+        description: "Cross-border flow monitoring and anomaly detection.",
+      },
     ],
   },
 ]
 
+/* -------------------------------------------------------------------------- */
+/*  Agents                                                                     */
+/* -------------------------------------------------------------------------- */
+
 export const initialAgents: Agent[] = [
-  // Common reusable agents
+  /* ---------- Common reusable agents ---------- */
   {
     id: "agent-common-1",
     scope: "common",
     name: "OpsMate Agent",
     function: "SOP, policy and document guidance for analysts",
     maturity: "L1",
+    tasks: [
+      "Answer SOP and policy questions in natural language",
+      "Surface the right control for the case in front of the analyst",
+      "Cite the source paragraph in policy / SOP",
+    ],
+    inputs: ["SOP library", "Policy documents", "Internal knowledge base"],
+    outputs: ["Inline answer", "Cited source", "Suggested next action"],
   },
   {
     id: "agent-common-2",
@@ -118,6 +382,13 @@ export const initialAgents: Agent[] = [
     name: "Policy-to-Rule Agent",
     function: "Converts policy requirements into rule logic and checklist controls",
     maturity: "L3",
+    tasks: [
+      "Parse policy clauses into structured requirements",
+      "Generate rule logic and case checklist items",
+      "Track policy version → rule mapping",
+    ],
+    inputs: ["Policy library", "Existing rules engine"],
+    outputs: ["Rule definitions", "Checklist controls", "Policy traceability"],
   },
   {
     id: "agent-common-3",
@@ -125,6 +396,13 @@ export const initialAgents: Agent[] = [
     name: "Nudge Agent",
     function: "Sends reminders, follow-ups and missing information prompts",
     maturity: "L4",
+    tasks: [
+      "Detect missing or ageing items on a case",
+      "Send tailored nudge to customer or analyst",
+      "Track response and escalate on SLA breach",
+    ],
+    inputs: ["Case state", "SLA matrix", "Comms templates"],
+    outputs: ["Nudge messages", "Escalation events"],
   },
   {
     id: "agent-common-4",
@@ -132,28 +410,119 @@ export const initialAgents: Agent[] = [
     name: "QC Agent",
     function: "Reviews case quality, evidence completeness and decision consistency",
     maturity: "L2",
+    tasks: [
+      "Check evidence completeness against control list",
+      "Spot decision inconsistencies vs similar cases",
+      "Flag QC issues before sign-off",
+    ],
+    inputs: ["Case file", "Decision history", "Control library"],
+    outputs: ["QC report", "Re-work flags"],
   },
 
-  // Business Verification
+  /* ---------- Stage 1: Application Submission ---------- */
+  {
+    id: "agent-1-1",
+    scope: "stage",
+    stageId: "stage-1",
+    name: "Customer & Ops Comms Agent",
+    function:
+      "Drafts, triages and sends all customer and ops communications across the case lifecycle",
+    maturity: "L3",
+    tasks: [
+      "Draft outbound emails / chat for analyst review",
+      "Triage inbound customer responses to the right case",
+      "Auto-classify intent (info request, complaint, escalation)",
+      "Maintain a single threaded conversation per case",
+    ],
+    inputs: ["Case state", "Comms templates", "Customer history", "Inbound channels"],
+    outputs: ["Draft messages", "Threaded conversation", "Intent labels"],
+  },
+  {
+    id: "agent-1-2",
+    scope: "stage",
+    stageId: "stage-1",
+    name: "Case Allocation Agent",
+    function:
+      "Routes new cases to the right analyst pool and escalates risk or SLA breaches",
+    maturity: "L3",
+    tasks: [
+      "Score case complexity and risk on intake",
+      "Route to the right analyst pool (SME, complex, EDD)",
+      "Detect SLA breach risk and escalate proactively",
+      "Re-balance load across analysts",
+    ],
+    inputs: ["Case attributes", "Analyst skills matrix", "Workload", "SLA rules"],
+    outputs: ["Routing decision", "Escalation event", "Workload metrics"],
+  },
+
+  /* ---------- Stage 2: Identity ---------- */
+  {
+    id: "agent-2-1",
+    scope: "stage",
+    stageId: "stage-2",
+    name: "ID Verification Agent",
+    function: "Validates ID documents, biometrics and registry matches end-to-end",
+    maturity: "L4",
+    tasks: [
+      "Validate document type, format and issuer",
+      "Run biometric match and liveness check",
+      "Cross-reference registry / bureau data",
+      "Generate evidence pack with confidence score",
+    ],
+    inputs: ["ID document", "Selfie / biometric", "Bureau APIs", "Registry data"],
+    outputs: ["ID decision", "Confidence score", "Evidence pack"],
+  },
+  {
+    id: "agent-2-2",
+    scope: "stage",
+    stageId: "stage-2",
+    name: "Proof of Address Agent",
+    function: "Checks address evidence against trusted sources and detects mismatches",
+    maturity: "L3",
+    tasks: [
+      "Extract address from utility / bank evidence",
+      "Match against electoral / postal databases",
+      "Flag mismatches and stale evidence",
+    ],
+    inputs: ["Address documents", "Postal / electoral databases"],
+    outputs: ["Match result", "Mismatch flags"],
+  },
+
+  /* ---------- Stage 3: Business Verification ---------- */
   {
     id: "agent-3-1",
     scope: "stage",
     stageId: "stage-3",
     name: "Business Verification Agent",
     function:
-      "Checks company registration, trading status, SIC, VAT, active/inactive status and registry evidence",
+      "Checks company registration, trading status, SIC, VAT and registry evidence",
     maturity: "L3",
+    tasks: [
+      "Pull live company registry data",
+      "Validate trading status, SIC, VAT, filings",
+      "Detect dormant / dissolved / restored states",
+      "Build evidence pack for analyst",
+    ],
+    inputs: ["Companies House / equivalents", "VAT registry", "Filings"],
+    outputs: ["Verification result", "Evidence pack"],
   },
   {
     id: "agent-3-2",
     scope: "stage",
     stageId: "stage-3",
     name: "Business Plan Review Agent",
-    function: "Reviews business model, expected activity, sector risk and onboarding rationale",
+    function: "Reviews business model, expected activity, sector risk and rationale",
     maturity: "L2",
+    tasks: [
+      "Extract model, products, customer base from plan",
+      "Estimate expected turnover and transaction profile",
+      "Flag sector-specific red flags",
+    ],
+    inputs: ["Business plan", "Website", "Sector risk taxonomy"],
+    outputs: ["Structured analyst brief", "Risk flags"],
   },
 
-  // Ownership Structure
+  /* ---------- Stage 4: Ownership ---------- */
   {
     id: "agent-4-1",
     scope: "stage",
@@ -161,6 +530,13 @@ export const initialAgents: Agent[] = [
     name: "Sole Trader Agent",
     function: "Validates sole trader profile, trading evidence and identity link",
     maturity: "L3",
+    tasks: [
+      "Link sole trader identity to trading evidence",
+      "Validate self-employment and HMRC artefacts",
+      "Confirm activity matches declarations",
+    ],
+    inputs: ["HMRC evidence", "Bank flows", "Customer declaration"],
+    outputs: ["Validation result", "Evidence summary"],
   },
   {
     id: "agent-4-2",
@@ -169,6 +545,13 @@ export const initialAgents: Agent[] = [
     name: "Director Verification Agent",
     function: "Checks directors, appointment history, active companies and risk patterns",
     maturity: "L3",
+    tasks: [
+      "Pull director appointment history",
+      "Detect serial director / shell-pattern signals",
+      "Cross-check sanctions and adverse media",
+    ],
+    inputs: ["Registry data", "Sanctions lists", "Adverse media"],
+    outputs: ["Director risk profile", "Pattern flags"],
   },
   {
     id: "agent-4-3",
@@ -177,6 +560,13 @@ export const initialAgents: Agent[] = [
     name: "Beneficial Ownership Agent",
     function: "Identifies PSCs, ownership percentages and control logic",
     maturity: "L3",
+    tasks: [
+      "Identify PSCs and ownership %",
+      "Reconcile declared vs registry UBO",
+      "Compute ultimate beneficial control",
+    ],
+    inputs: ["PSC register", "Declarations", "Group structure"],
+    outputs: ["UBO list", "Control map"],
   },
   {
     id: "agent-4-4",
@@ -185,6 +575,13 @@ export const initialAgents: Agent[] = [
     name: "Complex Ownership Mapping Agent",
     function: "Maps layered entities, parent companies, trusts and cross-border structures",
     maturity: "L2",
+    tasks: [
+      "Build ownership graph across jurisdictions",
+      "Highlight circular ownership, nominees, trusts",
+      "Quantify control across layers",
+    ],
+    inputs: ["Filings", "Trust deeds", "Sanctions maps"],
+    outputs: ["Ownership graph", "Opacity flags"],
   },
   {
     id: "agent-4-5",
@@ -193,34 +590,62 @@ export const initialAgents: Agent[] = [
     name: "Customer Activity Agent",
     function: "Compares expected customer activity with business type and ownership profile",
     maturity: "L2",
+    tasks: [
+      "Build expected activity profile from segment",
+      "Compare against declared activity",
+      "Flag inconsistencies for review",
+    ],
+    inputs: ["Segment data", "Declarations", "Peer activity"],
+    outputs: ["Expected profile", "Mismatch flags"],
   },
 
-  // Financial Due Diligence
+  /* ---------- Stage 5: Financial DD ---------- */
   {
     id: "agent-5-1",
     scope: "stage",
     stageId: "stage-5",
     name: "Source of Funds Agent",
-    function: "Reviews declared source of funds against evidence and transaction expectations",
+    function: "Reviews declared SoF against evidence and transaction expectations",
     maturity: "L3",
+    tasks: [
+      "Reconcile declared SoF with evidence",
+      "Compare against expected flows",
+      "Surface unexplained funding",
+    ],
+    inputs: ["SoF declaration", "Evidence docs", "Expected flow profile"],
+    outputs: ["SoF assessment", "Gap list"],
   },
   {
     id: "agent-5-2",
     scope: "stage",
     stageId: "stage-5",
     name: "Financial Analysis Agent",
-    function: "Reads accounts, turnover, balance sheet, liabilities and financial health indicators",
+    function: "Reads accounts, turnover, balance sheet and financial health",
     maturity: "L3",
+    tasks: [
+      "Parse statutory accounts",
+      "Compute key ratios and trend",
+      "Flag financial health concerns",
+    ],
+    inputs: ["Accounts", "Bureau data", "Sector benchmarks"],
+    outputs: ["Financial health view", "Ratio dashboard"],
   },
 
-  // Risk Assessment
+  /* ---------- Stage 6: Risk ---------- */
   {
     id: "agent-6-1",
     scope: "stage",
     stageId: "stage-6",
     name: "Adverse Media Agent",
-    function: "Searches and summarises negative media, fraud, litigation and reputational risk signals",
+    function: "Searches and summarises negative media, fraud, litigation and reputational signals",
     maturity: "L3",
+    tasks: [
+      "Search global media in multiple languages",
+      "Summarise hits with relevance",
+      "De-duplicate and link to entity",
+    ],
+    inputs: ["News feeds", "Litigation databases", "Translation"],
+    outputs: ["Adverse media summary", "Source links"],
   },
   {
     id: "agent-6-2",
@@ -229,6 +654,13 @@ export const initialAgents: Agent[] = [
     name: "PEP Due Diligence Agent",
     function: "Reviews PEP exposure, role, jurisdiction and required enhanced checks",
     maturity: "L2",
+    tasks: [
+      "Profile PEP role and tenure",
+      "Map close associates",
+      "Recommend EDD controls",
+    ],
+    inputs: ["PEP databases", "Government registers", "Adverse media"],
+    outputs: ["PEP profile", "EDD recommendation"],
   },
   {
     id: "agent-6-3",
@@ -237,6 +669,13 @@ export const initialAgents: Agent[] = [
     name: "Sanctions Screening Agent",
     function: "Checks sanctions hits, false positives and evidence trail",
     maturity: "L4",
+    tasks: [
+      "Run sanctions screening across global lists",
+      "Resolve false positives",
+      "Maintain auditable evidence trail",
+    ],
+    inputs: ["Sanctions lists", "Match engine", "Customer profile"],
+    outputs: ["Screening result", "Audit trail"],
   },
   {
     id: "agent-6-4",
@@ -245,9 +684,16 @@ export const initialAgents: Agent[] = [
     name: "AML Risk Assessment Agent",
     function: "Combines risk factors into a structured AML risk view",
     maturity: "L3",
+    tasks: [
+      "Aggregate risk factors with weighting",
+      "Produce structured AML risk view",
+      "Recommend tier and controls",
+    ],
+    inputs: ["Risk factors", "Policy weights"],
+    outputs: ["AML risk tier", "Control recommendation"],
   },
 
-  // Transaction Monitoring
+  /* ---------- Stage 7: TM ---------- */
   {
     id: "agent-7-1",
     scope: "stage",
@@ -255,6 +701,13 @@ export const initialAgents: Agent[] = [
     name: "Transaction Monitoring Agent",
     function: "Sets expected behaviour baseline and identifies post-onboarding anomalies",
     maturity: "L4",
+    tasks: [
+      "Build expected behaviour baseline",
+      "Detect anomalies and risk patterns",
+      "Cluster related alerts",
+    ],
+    inputs: ["Transactions", "KYC profile", "Network graph"],
+    outputs: ["Alerts", "Pattern clusters"],
   },
 ]
 
@@ -268,12 +721,12 @@ export const maturityDescriptions: Record<MaturityLevel, string> = {
 
 export type ThemePalette = {
   name: string
-  primary: string // main brand (purple)
-  accent: string // magenta
-  agentic: string // amber
-  human: string // blue
-  common: string // green
-  stage: string // purple cards (defaults to primary)
+  primary: string
+  accent: string
+  agentic: string
+  human: string
+  common: string
+  stage: string
 }
 
 export const defaultPalette: ThemePalette = {
