@@ -134,6 +134,23 @@ export function OnboardingJourney() {
     setActiveProcessStage(stageName)
     setProcessSheetOpen(true)
   }
+  const buildAgentFromProcess = (p: Process) => {
+    const stageId = stages.find((s) =>
+      s.processes.some((pp) => pp.id === p.id),
+    )?.id
+    setProcessSheetOpen(false)
+    setTimeout(
+      () =>
+        openAdd({
+          scope: "stage",
+          stageId,
+          name: `${p.name} Agent`,
+          function: p.agentBlueprint?.summary,
+          maturity: p.agentBlueprint?.targetMaturity,
+        }),
+      150,
+    )
+  }
 
   const themeStyle = {
     ["--c-primary" as string]: palette.primary,
@@ -213,9 +230,12 @@ export function OnboardingJourney() {
                   total={stages.length}
                   agents={stageAgents.get(stage.id) ?? []}
                   palette={palette}
-                  onAddAgent={() => openAdd({ scope: "stage", stageId: stage.id })}
+                  onAddAgent={() =>
+                    openAdd({ scope: "stage", stageId: stage.id })
+                  }
                   onAgentClick={openAgentSheet}
                   onProcessClick={(p) => openProcessSheet(p, stage.name)}
+                  onBuildAgentForProcess={(p) => buildAgentFromProcess(p)}
                 />
               ))}
               <OnboardedCard palette={palette} delay={stages.length} />
@@ -269,22 +289,7 @@ export function OnboardingJourney() {
           open={processSheetOpen}
           onOpenChange={setProcessSheetOpen}
           palette={palette}
-          onBuildAgent={(p) => {
-            setProcessSheetOpen(false)
-            // Pre-fill new agent dialog from blueprint summary
-            const stageId = stages.find((s) => s.processes.some((pp) => pp.id === p.id))?.id
-            setTimeout(
-              () =>
-                openAdd({
-                  scope: "stage",
-                  stageId,
-                  name: `${p.name} Agent`,
-                  function: p.agentBlueprint?.summary,
-                  maturity: p.agentBlueprint?.targetMaturity,
-                }),
-              150,
-            )
-          }}
+          onBuildAgent={buildAgentFromProcess}
         />
       </div>
     </TooltipProvider>
@@ -346,6 +351,7 @@ function StageCard({
   onAddAgent,
   onAgentClick,
   onProcessClick,
+  onBuildAgentForProcess,
 }: {
   stage: Stage
   index: number
@@ -355,6 +361,7 @@ function StageCard({
   onAddAgent: () => void
   onAgentClick: (a: Agent) => void
   onProcessClick: (p: Process) => void
+  onBuildAgentForProcess: (p: Process) => void
 }) {
   const Icon = stageIcons[stage.id] ?? Cog
   const last = index === total - 1
@@ -510,6 +517,7 @@ function StageCard({
               process={p}
               palette={palette}
               onClick={() => onProcessClick(p)}
+              onBuildAgent={() => onBuildAgentForProcess(p)}
               animationDelay={i * 50}
             />
           ))}
@@ -527,11 +535,13 @@ function ProcessRow({
   process,
   palette,
   onClick,
+  onBuildAgent,
   animationDelay = 0,
 }: {
   process: Process
   palette: ThemePalette
   onClick: () => void
+  onBuildAgent: () => void
   animationDelay?: number
 }) {
   const isAgentic = process.type === "agentic"
@@ -539,9 +549,8 @@ function ProcessRow({
   const hasBlueprint = process.type === "human" && !!process.agentBlueprint
 
   return (
-    <button
-      onClick={onClick}
-      className="group animate-draw-in relative flex items-center gap-2 overflow-hidden rounded-lg border bg-card px-2.5 py-2 text-left text-[13px] shadow-xs transition hover:-translate-y-px hover:shadow-md focus:outline-none focus-visible:ring-2"
+    <div
+      className="animate-draw-in relative overflow-hidden rounded-lg border bg-card shadow-xs transition hover:-translate-y-px hover:shadow-md"
       style={{
         animationDelay: `${animationDelay}ms`,
         borderColor: hexToRgba(color, 0.35),
@@ -559,48 +568,87 @@ function ProcessRow({
         />
       )}
 
-      <span
-        className="size-2 shrink-0 rounded-full"
-        style={{
-          background: color,
-          boxShadow: `0 0 0 3px ${hexToRgba(color, 0.18)}`,
-        }}
-      />
-
-      <span className="flex-1 leading-tight">{process.name}</span>
-
-      {hasBlueprint && (
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <span
-              className="inline-flex size-5 items-center justify-center rounded-full text-white animate-glow-pulse"
-              style={
-                {
-                  background: palette.accent,
-                  ["--glow-color" as string]: hexToRgba(palette.accent, 0.5),
-                } as React.CSSProperties
-              }
-              aria-label="Agent build opportunity"
-            >
-              <Lightbulb className="size-3" />
-            </span>
-          </TooltipTrigger>
-          <TooltipContent>Agent build opportunity — tap to see blueprint</TooltipContent>
-        </Tooltip>
-      )}
-
-      <span
-        className="text-[10px] font-semibold uppercase tracking-wider opacity-80"
-        style={{ color }}
+      {/* Main clickable row */}
+      <button
+        type="button"
+        onClick={onClick}
+        className="group flex w-full items-center gap-2 px-2.5 py-2 text-left text-[13px] focus:outline-none focus-visible:ring-2"
       >
-        {isAgentic ? "Agentic" : "Human"}
-      </span>
+        <span
+          className="size-2 shrink-0 rounded-full"
+          style={{
+            background: color,
+            boxShadow: `0 0 0 3px ${hexToRgba(color, 0.18)}`,
+          }}
+        />
 
-      <ChevronRight
-        className="size-3.5 shrink-0 text-muted-foreground transition group-hover:translate-x-0.5"
-        style={{ color: hexToRgba(color, 0.7) }}
-      />
-    </button>
+        <span className="flex-1 leading-tight">{process.name}</span>
+
+        <span
+          className="text-[10px] font-semibold uppercase tracking-wider opacity-80"
+          style={{ color }}
+        >
+          {isAgentic ? "Agentic" : "Human"}
+        </span>
+
+        <ChevronRight
+          className="size-3.5 shrink-0 transition group-hover:translate-x-0.5"
+          style={{ color: hexToRgba(color, 0.7) }}
+        />
+      </button>
+
+      {/* Build-agent affordance for human steps */}
+      {hasBlueprint && (
+        <div
+          className="flex items-center gap-1.5 border-t px-2.5 py-1.5"
+          style={{
+            borderColor: hexToRgba(palette.accent, 0.25),
+            background: hexToRgba(palette.accent, 0.05),
+          }}
+        >
+          <span
+            className="inline-flex size-4 shrink-0 items-center justify-center rounded-full text-white animate-glow-pulse"
+            style={
+              {
+                background: palette.accent,
+                ["--glow-color" as string]: hexToRgba(palette.accent, 0.5),
+              } as React.CSSProperties
+            }
+            aria-hidden
+          >
+            <Lightbulb className="size-2.5" />
+          </span>
+          <button
+            type="button"
+            onClick={onClick}
+            className="flex-1 truncate text-left text-[11px] leading-tight underline-offset-2 hover:underline"
+            style={{ color: palette.accent }}
+            title="View agent build blueprint"
+          >
+            {process.agentBlueprint?.summary}
+          </button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                type="button"
+                size="sm"
+                variant="ghost"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onBuildAgent()
+                }}
+                className="h-6 gap-1 px-1.5 text-[10px] font-semibold uppercase tracking-wider"
+                style={{ color: palette.accent }}
+              >
+                <Plus className="size-3" />
+                Build
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Build an agent for this human step</TooltipContent>
+          </Tooltip>
+        </div>
+      )}
+    </div>
   )
 }
 
