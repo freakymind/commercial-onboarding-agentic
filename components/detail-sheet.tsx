@@ -1,5 +1,6 @@
 "use client"
 
+import { useEffect, useState } from "react"
 import {
   Sheet,
   SheetContent,
@@ -37,7 +38,26 @@ function hexToRgba(hex: string, alpha: number) {
 }
 
 /* -------------------------------------------------------------------------- */
-/*  Agent Detail Sheet — always mounted, content gated inside                  */
+/*  Hook: keep last value for graceful close animation                         */
+/* -------------------------------------------------------------------------- */
+
+function useDeferredClose<T>(value: T | null, open: boolean): T | null {
+  const [held, setHeld] = useState<T | null>(value)
+  useEffect(() => {
+    if (open && value) {
+      setHeld(value)
+      return
+    }
+    if (!open) {
+      const t = setTimeout(() => setHeld(null), 250)
+      return () => clearTimeout(t)
+    }
+  }, [open, value])
+  return open ? value : held
+}
+
+/* -------------------------------------------------------------------------- */
+/*  Agent Detail Sheet                                                         */
 /* -------------------------------------------------------------------------- */
 
 export function AgentDetailSheet({
@@ -53,19 +73,35 @@ export function AgentDetailSheet({
   palette: ThemePalette
   onEdit?: (a: Agent) => void
 }) {
-  const baseColor = agent
-    ? agent.color || (agent.scope === "common" ? palette.common : palette.stage)
+  const display = useDeferredClose(agent, open)
+  const baseColor = display
+    ? display.color || (display.scope === "common" ? palette.common : palette.stage)
     : palette.primary
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side="right"
-        className="w-full overflow-y-auto sm:max-w-[540px]"
+        className="w-full overflow-y-auto p-0 sm:max-w-[540px]"
       >
-        {agent ? (
-          <>
-            <SheetHeader className="border-b">
+        <SheetHeader className="sr-only">
+          <SheetTitle>{display ? display.name : "Agent details"}</SheetTitle>
+          <SheetDescription>
+            {display ? display.function : "Agent details"}
+          </SheetDescription>
+        </SheetHeader>
+
+        {display && (
+          <div className="flex h-full flex-col">
+            <div
+              className="border-b p-4"
+              style={{
+                background: `linear-gradient(135deg, ${hexToRgba(
+                  baseColor,
+                  0.12,
+                )}, transparent)`,
+              }}
+            >
               <div className="flex items-start gap-3">
                 <span
                   className="flex size-12 shrink-0 items-center justify-center rounded-xl text-white shadow-md animate-glow-pulse"
@@ -78,7 +114,7 @@ export function AgentDetailSheet({
                 >
                   <Bot className="size-6" />
                 </span>
-                <div className="min-w-0 flex-1">
+                <div className="min-w-0 flex-1 pr-8">
                   <Badge
                     variant="outline"
                     className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider"
@@ -88,36 +124,36 @@ export function AgentDetailSheet({
                       background: hexToRgba(baseColor, 0.08),
                     }}
                   >
-                    {agent.scope === "common" ? "Reusable agent" : "Stage agent"} ·{" "}
-                    {agent.maturity}
+                    {display.scope === "common" ? "Reusable agent" : "Stage agent"} ·{" "}
+                    {display.maturity}
                   </Badge>
-                  <SheetTitle className="text-balance text-xl leading-tight">
-                    {agent.name}
-                  </SheetTitle>
-                  <SheetDescription className="mt-1 text-pretty leading-relaxed">
-                    {agent.function}
-                  </SheetDescription>
+                  <h2 className="text-balance text-xl font-semibold leading-tight">
+                    {display.name}
+                  </h2>
+                  <p className="mt-1 text-pretty text-sm leading-relaxed text-muted-foreground">
+                    {display.function}
+                  </p>
                 </div>
               </div>
-            </SheetHeader>
+            </div>
 
-            <div className="space-y-5 px-4 py-5">
+            <div className="flex-1 space-y-5 overflow-y-auto px-4 py-5">
               <SectionCard
                 icon={<Sparkles className="size-4" />}
                 color={baseColor}
                 label="Maturity"
-                title={agent.maturity}
-                subtitle={maturityDescriptions[agent.maturity]}
+                title={display.maturity}
+                subtitle={maturityDescriptions[display.maturity]}
               />
 
-              {agent.tasks && agent.tasks.length > 0 && (
+              {display.tasks && display.tasks.length > 0 && (
                 <Section
                   icon={<Workflow className="size-4" />}
                   color={baseColor}
                   title="What this agent does"
                 >
                   <ol className="space-y-2">
-                    {agent.tasks.map((t, i) => (
+                    {display.tasks.map((t, i) => (
                       <li
                         key={i}
                         className="flex items-start gap-2.5 rounded-lg border bg-card p-2.5 text-sm"
@@ -137,7 +173,7 @@ export function AgentDetailSheet({
               )}
 
               <div className="grid gap-3 sm:grid-cols-2">
-                {agent.inputs && agent.inputs.length > 0 && (
+                {display.inputs && display.inputs.length > 0 && (
                   <Section
                     icon={<FileInput className="size-4" />}
                     color={baseColor}
@@ -145,7 +181,7 @@ export function AgentDetailSheet({
                     compact
                   >
                     <ul className="space-y-1.5 text-sm">
-                      {agent.inputs.map((i) => (
+                      {display.inputs.map((i) => (
                         <li key={i} className="flex items-start gap-2">
                           <span
                             className="mt-1.5 size-1.5 shrink-0 rounded-full"
@@ -157,7 +193,7 @@ export function AgentDetailSheet({
                     </ul>
                   </Section>
                 )}
-                {agent.outputs && agent.outputs.length > 0 && (
+                {display.outputs && display.outputs.length > 0 && (
                   <Section
                     icon={<FileOutput className="size-4" />}
                     color={baseColor}
@@ -165,7 +201,7 @@ export function AgentDetailSheet({
                     compact
                   >
                     <ul className="space-y-1.5 text-sm">
-                      {agent.outputs.map((o) => (
+                      {display.outputs.map((o) => (
                         <li key={o} className="flex items-start gap-2">
                           <span
                             className="mt-1.5 size-1.5 shrink-0 rounded-full"
@@ -185,17 +221,13 @@ export function AgentDetailSheet({
                 <Button
                   variant="outline"
                   className="w-full"
-                  onClick={() => onEdit(agent)}
+                  onClick={() => onEdit(display)}
                 >
                   Edit agent details
                 </Button>
               </SheetFooter>
             )}
-          </>
-        ) : (
-          <SheetHeader>
-            <SheetTitle className="sr-only">Agent details</SheetTitle>
-          </SheetHeader>
+          </div>
         )}
       </SheetContent>
     </Sheet>
@@ -203,7 +235,7 @@ export function AgentDetailSheet({
 }
 
 /* -------------------------------------------------------------------------- */
-/*  Process Detail Sheet — always mounted, content gated inside                */
+/*  Process Detail Sheet                                                       */
 /* -------------------------------------------------------------------------- */
 
 export function ProcessDetailSheet({
@@ -221,8 +253,9 @@ export function ProcessDetailSheet({
   palette: ThemePalette
   onBuildAgent?: (p: Process) => void
 }) {
-  const isHuman = process?.type === "human"
-  const color = process
+  const display = useDeferredClose(process, open)
+  const isHuman = display?.type === "human"
+  const color = display
     ? isHuman
       ? palette.human
       : palette.agentic
@@ -232,11 +265,26 @@ export function ProcessDetailSheet({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side="right"
-        className="w-full overflow-y-auto sm:max-w-[560px]"
+        className="w-full overflow-y-auto p-0 sm:max-w-[560px]"
       >
-        {process ? (
-          <>
-            <SheetHeader className="border-b">
+        <SheetHeader className="sr-only">
+          <SheetTitle>{display ? display.name : "Process details"}</SheetTitle>
+          <SheetDescription>
+            {display ? display.description ?? display.name : "Process details"}
+          </SheetDescription>
+        </SheetHeader>
+
+        {display && (
+          <div className="flex h-full flex-col">
+            <div
+              className="border-b p-4"
+              style={{
+                background: `linear-gradient(135deg, ${hexToRgba(
+                  color,
+                  0.12,
+                )}, transparent)`,
+              }}
+            >
               <div className="flex items-start gap-3">
                 <span
                   className="flex size-12 shrink-0 items-center justify-center rounded-xl text-white shadow-md"
@@ -248,7 +296,7 @@ export function ProcessDetailSheet({
                     <Cpu className="size-5" />
                   )}
                 </span>
-                <div className="min-w-0 flex-1">
+                <div className="min-w-0 flex-1 pr-8">
                   <div className="mb-1.5 flex flex-wrap items-center gap-1.5">
                     <Badge
                       variant="outline"
@@ -275,20 +323,20 @@ export function ProcessDetailSheet({
                       </Badge>
                     )}
                   </div>
-                  <SheetTitle className="text-balance text-xl leading-tight">
-                    {process.name}
-                  </SheetTitle>
-                  {process.description && (
-                    <SheetDescription className="mt-1 text-pretty leading-relaxed">
-                      {process.description}
-                    </SheetDescription>
+                  <h2 className="text-balance text-xl font-semibold leading-tight">
+                    {display.name}
+                  </h2>
+                  {display.description && (
+                    <p className="mt-1 text-pretty text-sm leading-relaxed text-muted-foreground">
+                      {display.description}
+                    </p>
                   )}
                 </div>
               </div>
-            </SheetHeader>
+            </div>
 
-            <div className="space-y-5 px-4 py-5">
-              {isHuman && process.agentBlueprint ? (
+            <div className="flex-1 space-y-5 overflow-y-auto px-4 py-5">
+              {isHuman && display.agentBlueprint ? (
                 <div
                   className="relative overflow-hidden rounded-xl border-2 p-4"
                   style={{
@@ -333,7 +381,7 @@ export function ProcessDetailSheet({
                   </div>
 
                   <p className="mt-3 text-sm leading-relaxed text-foreground/90">
-                    {process.agentBlueprint.summary}
+                    {display.agentBlueprint.summary}
                   </p>
 
                   <div className="mt-4 space-y-3">
@@ -341,19 +389,19 @@ export function ProcessDetailSheet({
                       icon={<Workflow className="size-3.5" />}
                       color={palette.accent}
                       label="Capabilities"
-                      items={process.agentBlueprint.capabilities}
+                      items={display.agentBlueprint.capabilities}
                     />
                     <BlueprintGroup
                       icon={<FileInput className="size-3.5" />}
                       color={palette.primary}
                       label="Inputs"
-                      items={process.agentBlueprint.inputs}
+                      items={display.agentBlueprint.inputs}
                     />
                     <BlueprintGroup
                       icon={<ShieldAlert className="size-3.5" />}
                       color={palette.human}
                       label="Risks addressed"
-                      items={process.agentBlueprint.risks}
+                      items={display.agentBlueprint.risks}
                     />
                   </div>
 
@@ -369,7 +417,7 @@ export function ProcessDetailSheet({
                           className="font-mono font-semibold"
                           style={{ color: palette.accent }}
                         >
-                          {process.agentBlueprint.targetMaturity}
+                          {display.agentBlueprint.targetMaturity}
                         </span>
                       </span>
                     </div>
@@ -378,7 +426,7 @@ export function ProcessDetailSheet({
                         size="sm"
                         className="gap-1.5 text-white shadow-sm"
                         style={{ background: palette.accent }}
-                        onClick={() => onBuildAgent(process)}
+                        onClick={() => onBuildAgent(display)}
                       >
                         <Wrench className="size-3.5" />
                         Build agent
@@ -398,17 +446,13 @@ export function ProcessDetailSheet({
                   />
                   <p className="leading-snug">
                     This step is already covered by an embedded agent. Tap the
-                    related agent card above to see what it does, its inputs and
+                    related agent card to see what it does, its inputs and
                     outputs.
                   </p>
                 </div>
               )}
             </div>
-          </>
-        ) : (
-          <SheetHeader>
-            <SheetTitle className="sr-only">Process details</SheetTitle>
-          </SheetHeader>
+          </div>
         )}
       </SheetContent>
     </Sheet>
