@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useMemo, useRef, useState } from "react"
+import Link from "next/link"
 import {
   ArrowRight,
   Bot,
@@ -13,6 +14,7 @@ import {
   Fingerprint,
   Layers,
   Lightbulb,
+  Play,
   Plus,
   Radar,
   ScanSearch,
@@ -238,6 +240,20 @@ export function OnboardingJourney() {
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
+              <Link href="/flow">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-1.5 bg-transparent"
+                  style={{
+                    borderColor: hexToRgba(palette.primary, 0.4),
+                    color: palette.primary,
+                  }}
+                >
+                  <Play className="size-3.5" />
+                  Watch flow
+                </Button>
+              </Link>
               <ThemeCustomizer palette={palette} onChange={setPalette} />
               <Button
                 size="sm"
