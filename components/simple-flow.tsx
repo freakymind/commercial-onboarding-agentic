@@ -3,10 +3,12 @@
 import { useEffect, useRef, useState } from "react"
 import Link from "next/link"
 import {
+  AlertTriangle,
   ArrowLeft,
   Bot,
   CheckCircle2,
   FileText,
+  Map,
   Pause,
   Play,
   Search,
@@ -14,6 +16,7 @@ import {
   Sparkles,
   User,
   UserCircle2,
+  Wallet,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
@@ -29,16 +32,16 @@ type FNode = {
   Icon: React.ComponentType<{ className?: string }>
 }
 
-const W = 1400
-const H = 540
-const TOP = 160
-const BOTTOM = 380
+const W = 1500
+const H = 560
+const TOP = 170
+const BOTTOM = 410
 
 const NODES: FNode[] = [
   {
     id: "customer",
-    x: 90,
-    y: 270,
+    x: 80,
+    y: 290,
     label: "Customer",
     sub: "Submits application",
     type: "customer",
@@ -46,71 +49,80 @@ const NODES: FNode[] = [
   },
   {
     id: "intake",
-    x: 230,
+    x: 240,
     y: TOP,
-    label: "Application Intake",
+    label: "Intake Agent",
     sub: "Parses forms & docs",
     type: "agent",
     Icon: FileText,
   },
   {
     id: "id",
-    x: 390,
+    x: 400,
     y: TOP,
-    label: "ID Verification",
+    label: "ID Agent",
     sub: "Validates identity",
     type: "agent",
     Icon: ShieldCheck,
   },
   {
     id: "reviewer",
-    x: 550,
+    x: 560,
     y: BOTTOM,
     label: "Compliance Reviewer",
-    sub: "Edge-case decisions",
+    sub: "Resolves ID exceptions",
     type: "human",
     Icon: User,
   },
   {
     id: "kyc",
-    x: 710,
+    x: 720,
     y: TOP,
-    label: "KYC Screening",
+    label: "KYC Agent",
     sub: "Sanctions & PEP",
     type: "agent",
     Icon: Search,
   },
   {
     id: "plaus",
-    x: 870,
+    x: 880,
     y: TOP,
-    label: "Plausibility",
-    sub: "Triangulates evidence",
+    label: "Plausibility Agent",
+    sub: "Web + maps + registries",
     type: "agent",
     Icon: Sparkles,
   },
   {
-    id: "decide",
-    x: 1030,
+    id: "analyst",
+    x: 1040,
     y: BOTTOM,
-    label: "Decision Maker",
-    sub: "Final approval",
+    label: "Senior Analyst",
+    sub: "Complex / high-risk cases",
     type: "human",
     Icon: User,
   },
   {
-    id: "setup",
-    x: 1190,
+    id: "decide",
+    x: 1200,
     y: TOP,
-    label: "Account Setup",
+    label: "Decision Agent",
+    sub: "Auto-approves clean cases",
+    type: "agent",
+    Icon: Map,
+  },
+  {
+    id: "setup",
+    x: 1340,
+    y: TOP,
+    label: "Setup Agent",
     sub: "Provisions account",
     type: "agent",
-    Icon: Bot,
+    Icon: Wallet,
   },
   {
     id: "done",
-    x: 1330,
-    y: 270,
+    x: 1450,
+    y: 290,
     label: "Onboarded",
     sub: "Customer is live",
     type: "end",
@@ -118,7 +130,15 @@ const NODES: FNode[] = [
   },
 ]
 
-function buildPath(nodes: FNode[]) {
+const NODE_BY_ID = Object.fromEntries(NODES.map((n) => [n.id, n])) as Record<
+  string,
+  FNode
+>
+
+/* ---------- Path builder ---------- */
+
+function pathFromIds(ids: string[]) {
+  const nodes = ids.map((id) => NODE_BY_ID[id])
   if (nodes.length === 0) return ""
   let d = `M ${nodes[0].x} ${nodes[0].y}`
   for (let i = 1; i < nodes.length; i++) {
@@ -130,9 +150,42 @@ function buildPath(nodes: FNode[]) {
   return d
 }
 
-const PATH_D = buildPath(NODES)
+const PATH_HAPPY = pathFromIds([
+  "customer",
+  "intake",
+  "id",
+  "kyc",
+  "plaus",
+  "decide",
+  "setup",
+  "done",
+])
 
-const SPEEDS = { slow: 22, normal: 14, fast: 8 } as const
+const PATH_ID_EXCEPTION = pathFromIds([
+  "customer",
+  "intake",
+  "id",
+  "reviewer",
+  "kyc",
+  "plaus",
+  "decide",
+  "setup",
+  "done",
+])
+
+const PATH_COMPLEX_EXCEPTION = pathFromIds([
+  "customer",
+  "intake",
+  "id",
+  "kyc",
+  "plaus",
+  "analyst",
+  "decide",
+  "setup",
+  "done",
+])
+
+const SPEEDS = { slow: 26, normal: 16, fast: 9 } as const
 type Speed = keyof typeof SPEEDS
 
 const NW = {
@@ -140,13 +193,51 @@ const NW = {
   accent: "#bd0f72",
   agent: "#5a287d",
   human: "#0f7ab5",
+  exception: "#d97706",
 }
 
-const PACKETS = [
-  { color: "#bd0f72", label: "Application", r: 8 },
-  { color: "#5a287d", label: "ID", r: 7 },
-  { color: "#0f7ab5", label: "Case file", r: 7 },
-  { color: "#bd0f72", label: "Decision", r: 6 },
+type Packet = {
+  id: string
+  color: string
+  label: string
+  r: number
+  pathId: string
+  delayShare: number
+}
+
+const PACKETS: Packet[] = [
+  {
+    id: "p1",
+    color: NW.accent,
+    label: "Clean application",
+    r: 8,
+    pathId: "path-happy",
+    delayShare: 0,
+  },
+  {
+    id: "p2",
+    color: NW.exception,
+    label: "ID exception",
+    r: 8,
+    pathId: "path-id-exception",
+    delayShare: 0.33,
+  },
+  {
+    id: "p3",
+    color: NW.primary,
+    label: "Standard case",
+    r: 7,
+    pathId: "path-happy",
+    delayShare: 0.55,
+  },
+  {
+    id: "p4",
+    color: NW.exception,
+    label: "Complex / high-risk",
+    r: 8,
+    pathId: "path-complex-exception",
+    delayShare: 0.78,
+  },
 ]
 
 export function SimpleFlow() {
@@ -168,7 +259,7 @@ export function SimpleFlow() {
 
   return (
     <div className="nw-grid-bg min-h-screen p-4 md:p-8">
-      <div className="mx-auto max-w-[1500px]">
+      <div className="mx-auto max-w-[1600px]">
         {/* Header */}
         <header className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div className="flex items-start gap-2">
@@ -186,9 +277,11 @@ export function SimpleFlow() {
                 Onboarding in motion
               </h1>
               <p className="mt-1 max-w-2xl text-pretty text-sm text-muted-foreground md:text-base">
-                A live look at how agents and humans hand off work to onboard a
-                commercial customer. Watch the work packets travel between
-                roles.
+                Most cases sail through the agent lane. Only{" "}
+                <span style={{ color: NW.exception, fontWeight: 600 }}>
+                  exceptions and complex applications
+                </span>{" "}
+                that agents can&apos;t fully resolve drop down to a human.
               </p>
             </div>
           </div>
@@ -246,7 +339,7 @@ export function SimpleFlow() {
               style={{
                 aspectRatio: `${W} / ${H}`,
                 width: "100%",
-                minWidth: 1000,
+                minWidth: 1100,
               }}
             >
               <svg
@@ -264,15 +357,11 @@ export function SimpleFlow() {
                     x2="1"
                     y2="0"
                   >
-                    <stop
-                      offset="0%"
-                      stopColor={NW.agent}
-                      stopOpacity="0.04"
-                    />
+                    <stop offset="0%" stopColor={NW.agent} stopOpacity="0.04" />
                     <stop
                       offset="50%"
                       stopColor={NW.agent}
-                      stopOpacity="0.12"
+                      stopOpacity="0.14"
                     />
                     <stop
                       offset="100%"
@@ -287,15 +376,11 @@ export function SimpleFlow() {
                     x2="1"
                     y2="0"
                   >
-                    <stop
-                      offset="0%"
-                      stopColor={NW.human}
-                      stopOpacity="0.04"
-                    />
+                    <stop offset="0%" stopColor={NW.human} stopOpacity="0.04" />
                     <stop
                       offset="50%"
                       stopColor={NW.human}
-                      stopOpacity="0.12"
+                      stopOpacity="0.14"
                     />
                     <stop
                       offset="100%"
@@ -308,30 +393,30 @@ export function SimpleFlow() {
                 {/* Lane backgrounds */}
                 <rect
                   x="0"
-                  y="60"
+                  y="70"
                   width={W}
-                  height="190"
+                  height="200"
                   fill="url(#agent-lane)"
                 />
                 <rect
                   x="0"
-                  y="290"
+                  y="310"
                   width={W}
-                  height="190"
+                  height="200"
                   fill="url(#human-lane)"
                 />
 
-                {/* Lane labels — placed in the empty middle band so they never overlap nodes */}
+                {/* Lane labels */}
                 <text
                   x={W / 2}
-                  y="56"
+                  y="60"
                   fontSize="11"
                   fontWeight="800"
                   fill={NW.agent}
                   letterSpacing="4"
                   textAnchor="middle"
                 >
-                  AGENTS LANE
+                  AGENTS LANE — AUTONOMOUS WORK
                 </text>
                 <text
                   x={W / 2}
@@ -342,28 +427,79 @@ export function SimpleFlow() {
                   letterSpacing="4"
                   textAnchor="middle"
                 >
-                  HUMANS LANE
+                  HUMANS LANE — EXCEPTION HANDLING
                 </text>
 
-                {/* Base path */}
+                {/* Happy path — base track */}
                 <path
-                  id="flow-path"
-                  d={PATH_D}
+                  id="path-happy"
+                  d={PATH_HAPPY}
                   fill="none"
                   stroke={`${NW.primary}33`}
                   strokeWidth="3"
                   strokeLinecap="round"
                 />
-
-                {/* Animated dashed glow overlay */}
+                {/* Hidden full paths used by exception packets only */}
                 <path
-                  d={PATH_D}
+                  id="path-id-exception"
+                  d={PATH_ID_EXCEPTION}
+                  fill="none"
+                  stroke="transparent"
+                  strokeWidth="0"
+                />
+                <path
+                  id="path-complex-exception"
+                  d={PATH_COMPLEX_EXCEPTION}
+                  fill="none"
+                  stroke="transparent"
+                  strokeWidth="0"
+                />
+
+                {/* Visible exception branches as dashed amber arrows */}
+                <path
+                  d={pathFromIds(["id", "reviewer", "kyc"])}
+                  fill="none"
+                  stroke={NW.exception}
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeDasharray="4 8"
+                  opacity="0.65"
+                >
+                  <animate
+                    attributeName="stroke-dashoffset"
+                    from="0"
+                    to="-120"
+                    dur={`${dur * 0.6}s`}
+                    repeatCount="indefinite"
+                  />
+                </path>
+                <path
+                  d={pathFromIds(["plaus", "analyst", "decide"])}
+                  fill="none"
+                  stroke={NW.exception}
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeDasharray="4 8"
+                  opacity="0.65"
+                >
+                  <animate
+                    attributeName="stroke-dashoffset"
+                    from="0"
+                    to="-120"
+                    dur={`${dur * 0.6}s`}
+                    repeatCount="indefinite"
+                  />
+                </path>
+
+                {/* Animated dashed glow overlay along happy path */}
+                <path
+                  d={PATH_HAPPY}
                   fill="none"
                   stroke={NW.accent}
                   strokeWidth="2"
                   strokeLinecap="round"
                   strokeDasharray="6 14"
-                  opacity="0.55"
+                  opacity="0.5"
                 >
                   <animate
                     attributeName="stroke-dashoffset"
@@ -373,6 +509,18 @@ export function SimpleFlow() {
                     repeatCount="indefinite"
                   />
                 </path>
+
+                {/* Exception labels on the dip arrows */}
+                <ExceptionLabel
+                  x={(NODE_BY_ID.id.x + NODE_BY_ID.reviewer.x) / 2 - 12}
+                  y={(TOP + BOTTOM) / 2 - 24}
+                  text="Doc mismatch / low confidence"
+                />
+                <ExceptionLabel
+                  x={(NODE_BY_ID.plaus.x + NODE_BY_ID.analyst.x) / 2 - 12}
+                  y={(TOP + BOTTOM) / 2 - 24}
+                  text="Contradictions / high-risk sector"
+                />
 
                 {/* Pulse rings on every node */}
                 {NODES.map((n) => {
@@ -412,43 +560,31 @@ export function SimpleFlow() {
                   )
                 })}
 
-                {/* Traveling work packets */}
-                {PACKETS.map((p, i) => (
-                  <g key={`packet-${i}`}>
+                {/* Traveling work packets — each one knows its own path */}
+                {PACKETS.map((p) => (
+                  <g key={`packet-${p.id}`}>
                     <circle
                       r={p.r}
                       fill={p.color}
-                      style={{
-                        filter: `drop-shadow(0 0 8px ${p.color})`,
-                      }}
+                      style={{ filter: `drop-shadow(0 0 8px ${p.color})` }}
                     >
                       <animateMotion
                         dur={`${dur}s`}
-                        begin={`${(dur / PACKETS.length) * i}s`}
+                        begin={`${dur * p.delayShare}s`}
                         repeatCount="indefinite"
                         rotate="auto"
                       >
-                        <mpath
-                          xlinkHref="#flow-path"
-                          href="#flow-path"
-                        />
+                        <mpath xlinkHref={`#${p.pathId}`} href={`#${p.pathId}`} />
                       </animateMotion>
                     </circle>
                     {/* Trailing fade */}
-                    <circle
-                      r={p.r * 1.6}
-                      fill={p.color}
-                      opacity="0.18"
-                    >
+                    <circle r={p.r * 1.6} fill={p.color} opacity="0.18">
                       <animateMotion
                         dur={`${dur}s`}
-                        begin={`${(dur / PACKETS.length) * i - 0.18}s`}
+                        begin={`${dur * p.delayShare - 0.2}s`}
                         repeatCount="indefinite"
                       >
-                        <mpath
-                          xlinkHref="#flow-path"
-                          href="#flow-path"
-                        />
+                        <mpath xlinkHref={`#${p.pathId}`} href={`#${p.pathId}`} />
                       </animateMotion>
                     </circle>
                   </g>
@@ -471,18 +607,18 @@ export function SimpleFlow() {
             />
             <Legend
               label="Human"
-              desc="Reviews edge cases & makes final approval"
+              desc="Reviews exceptions agents can&apos;t fully resolve"
               color={NW.human}
             />
             <Legend
-              label="Work packet"
-              desc="A document, decision or case file in motion"
+              label="Standard packet"
+              desc="Clean case — stays on the agent lane end-to-end"
               color={NW.accent}
             />
             <Legend
-              label="Customer"
-              desc="Submits the application and gets onboarded"
-              color={NW.accent}
+              label="Exception packet"
+              desc="Drops to human, then resumes on the agent lane"
+              color={NW.exception}
             />
           </div>
         </section>
@@ -491,19 +627,56 @@ export function SimpleFlow() {
         <section className="mt-6 grid gap-4 md:grid-cols-3">
           <Story
             title="Agents do the heavy lifting"
-            body="Application intake, ID verification, KYC screening, plausibility and account setup are all run autonomously by purpose-built agents."
+            body="Intake, ID, KYC, plausibility, decisioning and account setup all run autonomously. ~85% of cases never need a human."
             color={NW.agent}
           />
           <Story
-            title="Humans handle the judgement calls"
-            body="Compliance reviewers and decision makers step in for edge cases — high-risk sectors, contradictions, plausibility scores below threshold."
-            color={NW.human}
+            title="Humans handle the edge cases"
+            body="When an agent's confidence is low, the document quality is poor, or signals contradict, the case drops down to a Compliance Reviewer or Senior Analyst."
+            color={NW.exception}
+            icon
           />
           <Story
             title="Continuous handoff"
-            body="Work flows continuously between agents and humans. No queues, no batched lists — every case in motion at the same time."
+            body="The packet returns to the agent lane immediately after human input — no batch queues, no overnight runs. Every case stays in motion."
             color={NW.accent}
           />
+        </section>
+
+        {/* What makes agents fail */}
+        <section className="mt-6 rounded-2xl border bg-card p-5 shadow-sm">
+          <div className="flex items-center gap-2">
+            <AlertTriangle
+              className="size-4"
+              style={{ color: NW.exception }}
+            />
+            <h2
+              className="text-sm font-bold uppercase tracking-wider"
+              style={{ color: NW.exception }}
+            >
+              When agents escalate to humans
+            </h2>
+          </div>
+          <div className="mt-3 grid gap-3 md:grid-cols-2">
+            <FailCase
+              title="ID Agent → Compliance Reviewer"
+              triggers={[
+                "Document scan quality below threshold",
+                "Name / DOB mismatch across sources",
+                "Possible synthetic identity signals",
+                "Confidence score < 80%",
+              ]}
+            />
+            <FailCase
+              title="Plausibility Agent → Senior Analyst"
+              triggers={[
+                "Contradictions across web, maps and registries",
+                "High-risk sector (cash-intensive, crypto, cross-border)",
+                "Declared turnover not supported by digital footprint",
+                "Trading premises classification ambiguous",
+              ]}
+            />
+          </div>
         </section>
       </div>
     </div>
@@ -541,6 +714,15 @@ function NodeCard({ n }: { n: FNode }) {
         style={{ borderColor: color, color }}
       >
         <n.Icon className="size-7" />
+        {n.type === "agent" && (
+          <span
+            className="absolute -bottom-1 -right-1 grid size-5 place-items-center rounded-full border-2 border-white text-[9px] font-bold text-white shadow"
+            style={{ background: NW.agent }}
+            aria-hidden
+          >
+            <Bot className="size-3" />
+          </span>
+        )}
       </div>
       <div
         className="mt-2 max-w-[150px] rounded-md bg-white/95 px-2 py-1 text-center text-[12px] font-bold leading-tight shadow-sm backdrop-blur-sm"
@@ -558,6 +740,42 @@ function NodeCard({ n }: { n: FNode }) {
         {n.sub}
       </div>
     </div>
+  )
+}
+
+function ExceptionLabel({
+  x,
+  y,
+  text,
+}: {
+  x: number
+  y: number
+  text: string
+}) {
+  return (
+    <g transform={`translate(${x}, ${y})`}>
+      <rect
+        x="-90"
+        y="-12"
+        width="200"
+        height="22"
+        rx="11"
+        fill="white"
+        stroke={NW.exception}
+        strokeWidth="1.5"
+        opacity="0.95"
+      />
+      <text
+        x="10"
+        y="3"
+        fontSize="10"
+        fontWeight="700"
+        fill={NW.exception}
+        textAnchor="middle"
+      >
+        {text}
+      </text>
+    </g>
   )
 }
 
@@ -593,22 +811,53 @@ function Story({
   title,
   body,
   color,
+  icon,
 }: {
   title: string
   body: string
   color: string
+  icon?: boolean
 }) {
   return (
     <div className="rounded-xl border bg-card p-4 shadow-sm">
       <div
-        className="text-xs font-bold uppercase tracking-wider"
+        className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider"
         style={{ color }}
       >
+        {icon && <AlertTriangle className="size-3.5" />}
         {title}
       </div>
       <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
         {body}
       </p>
+    </div>
+  )
+}
+
+function FailCase({ title, triggers }: { title: string; triggers: string[] }) {
+  return (
+    <div
+      className="rounded-xl border-2 border-dashed p-4"
+      style={{ borderColor: `${NW.exception}66` }}
+    >
+      <div
+        className="text-sm font-bold"
+        style={{ color: NW.primary }}
+      >
+        {title}
+      </div>
+      <ul className="mt-2 space-y-1.5 text-sm text-muted-foreground">
+        {triggers.map((t) => (
+          <li key={t} className="flex items-start gap-2">
+            <span
+              className="mt-1.5 size-1.5 shrink-0 rounded-full"
+              style={{ background: NW.exception }}
+              aria-hidden
+            />
+            <span>{t}</span>
+          </li>
+        ))}
+      </ul>
     </div>
   )
 }
