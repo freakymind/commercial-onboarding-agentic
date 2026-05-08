@@ -21,6 +21,8 @@ import {
 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { SwimlaneFlow } from "@/components/swimlane-flow"
 
 /* ---------- NatWest palette ---------- */
 const NW = {
@@ -272,24 +274,42 @@ export function SimpleFlow() {
         {/* Stage pill ribbon (mirrors main page) */}
         <StageRibbon activeIdx={activeIdx} onJump={setActiveIdx} />
 
-        {/* Controls */}
-        <Controls
-          playing={playing}
-          onTogglePlay={() => setPlaying((p) => !p)}
-          speed={speed}
-          onSpeedChange={setSpeed}
-          onPrev={() =>
-            setActiveIdx((i) => (i - 1 + ROWS.length) % ROWS.length)
-          }
-          onNext={() => setActiveIdx((i) => (i + 1) % ROWS.length)}
-          onRestart={() => setActiveIdx(0)}
-        />
+        {/* View tabs — Live swimlane (motion overview) vs Stage timeline (detailed) */}
+        <Tabs defaultValue="swimlane" className="mt-4">
+          <TabsList className="h-auto bg-muted/60 p-1">
+            <TabsTrigger value="swimlane" className="px-4 py-2 text-xs font-semibold">
+              Live swimlane
+            </TabsTrigger>
+            <TabsTrigger value="timeline" className="px-4 py-2 text-xs font-semibold">
+              Stage timeline
+            </TabsTrigger>
+          </TabsList>
 
-        {/* Timeline */}
-        <section
-          ref={sectionRef}
-          className="relative mt-4 overflow-hidden rounded-2xl border-2 border-[#5a287d]/20 bg-card p-3 shadow-sm sm:p-5"
-        >
+          {/* === Tab 1: Live swimlane (horizontal animated flow) === */}
+          <TabsContent value="swimlane" className="mt-3">
+            <SwimlaneFlow />
+          </TabsContent>
+
+          {/* === Tab 2: Stage timeline (detailed step-through) === */}
+          <TabsContent value="timeline" className="mt-3">
+            {/* Controls */}
+            <Controls
+              playing={playing}
+              onTogglePlay={() => setPlaying((p) => !p)}
+              speed={speed}
+              onSpeedChange={setSpeed}
+              onPrev={() =>
+                setActiveIdx((i) => (i - 1 + ROWS.length) % ROWS.length)
+              }
+              onNext={() => setActiveIdx((i) => (i + 1) % ROWS.length)}
+              onRestart={() => setActiveIdx(0)}
+            />
+
+            {/* Timeline */}
+            <section
+              ref={sectionRef}
+              className="relative mt-4 overflow-hidden rounded-2xl border-2 border-[#5a287d]/20 bg-card p-3 shadow-sm sm:p-5"
+            >
           {/* Column headers */}
           <div
             className="grid items-end gap-x-4"
@@ -361,13 +381,15 @@ export function SimpleFlow() {
               />
             </div>
           )}
-        </section>
+            </section>
 
-        {/* Active stage detail */}
-        <ActiveDetail row={activeRow} escalated={escalated} />
+            {/* Active stage detail */}
+            <ActiveDetail row={activeRow} escalated={escalated} />
 
-        {/* Legend */}
-        <Legend />
+            {/* Legend */}
+            <Legend />
+          </TabsContent>
+        </Tabs>
       </div>
     </main>
   )
