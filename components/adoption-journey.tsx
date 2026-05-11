@@ -4,13 +4,9 @@ import { useState, useEffect } from "react"
 import Link from "next/link"
 import {
   ArrowLeft,
-  ArrowRight,
   Bot,
-  CheckCircle2,
   ChevronRight,
-  Clock,
   Eye,
-  FileSearch,
   Layers,
   Play,
   Pause,
@@ -36,770 +32,561 @@ const NW = {
   bg: "#faf8fc",
 }
 
-/* ---------- Pilot Agents ---------- */
-const PILOT_AGENTS = [
-  {
-    id: "bv",
-    name: "Business Verification",
-    short: "BizVerify",
-    color: "#7c3aed",
-    icon: Search,
-    desc: "Validates company registration, structure docs and trading status against Companies House and trusted registries.",
-    inputs: ["Company name", "Registration number", "Submitted docs"],
-    outputs: ["Verification result", "Confidence score", "Flag list"],
-  },
-  {
-    id: "plausibility",
-    name: "Plausibility Agent",
-    short: "Plausibility",
-    color: "#bd0f72",
-    icon: Eye,
-    desc: "Triangulates web, maps, registry and document signals to score whether the business plausibly operates as declared.",
-    inputs: ["BizVerify output", "Web search", "Maps data", "Customer declarations"],
-    outputs: ["Plausibility score", "Contradiction report", "Explainable verdict"],
-  },
-  {
-    id: "sof",
-    name: "Source of Funds",
-    short: "SOF",
-    color: "#0891b2",
-    icon: TrendingUp,
-    desc: "Analyses bank statements, tax records and financials to validate declared source of funds and expected activity.",
-    inputs: ["Bank statements", "Tax docs", "Customer declaration"],
-    outputs: ["SOF assessment", "Anomaly flags", "Flow profile"],
-  },
-  {
-    id: "apcmate",
-    name: "APCMate",
-    short: "APC",
-    color: "#059669",
-    icon: Shield,
-    desc: "Automates Annual Product & Compliance checks, flagging policy breaches and generating remediation tasks.",
-    inputs: ["Customer profile", "Product holdings", "Policy rules"],
-    outputs: ["Compliance status", "Breach list", "Remediation tasks"],
-  },
+/* ---------- Pilot Agents with colors ---------- */
+const AGENTS = [
+  { id: "bv", name: "Business Verification", short: "BizVerify", color: "#7c3aed", Icon: Search },
+  { id: "plausibility", name: "Plausibility Agent", short: "Plausibility", color: "#bd0f72", Icon: Eye },
+  { id: "sof", name: "Source of Funds", short: "SOF", color: "#0891b2", Icon: TrendingUp },
+  { id: "apcmate", name: "APCMate", short: "APC", color: "#059669", Icon: Shield },
 ]
 
-/* ---------- Phases ---------- */
-const PHASES = [
-  {
-    id: "human",
-    number: 1,
-    title: "Human-Driven Journey",
-    subtitle: "Current State",
-    desc: "Analysts manually process every application through all 7 stages. Documents are reviewed by eye, registries checked by hand, decisions made case-by-case. Average cycle time: 5-7 days.",
-    color: NW.human,
-    icon: Users,
-  },
-  {
-    id: "shadow",
-    number: 2,
-    title: "Shadow Mode — Agents Test",
-    subtitle: "Pilot Phase",
-    desc: "Agents run in parallel, consuming the same data as analysts. They produce outputs for review but don't drive decisions yet. This lets us measure accuracy, catch edge cases and build trust.",
-    color: NW.shadow,
-    icon: Eye,
-  },
-  {
-    id: "assisted",
-    number: 3,
-    title: "Assisted Mode — Agents Assist",
-    subtitle: "Adoption Phase",
-    desc: "High-confidence agent outputs are surfaced to analysts as recommendations. Analysts approve, override or escalate. Cycle time drops, consistency rises, audit trail improves.",
-    color: NW.accent,
-    icon: Zap,
-  },
-  {
-    id: "live",
-    number: 4,
-    title: "Live Mode — Agents Integrated",
-    subtitle: "Target State",
-    desc: "Agents become part of the journey. They process, decide and hand off automatically. Humans provide oversight (EU AI Act) and handle exceptions only. Cycle time: hours, not days.",
-    color: NW.live,
-    icon: Bot,
-  },
+/* ---------- Phase definitions ---------- */
+type PhaseId = "human" | "shadow" | "assisted" | "live"
+const PHASES: { id: PhaseId; label: string; color: string }[] = [
+  { id: "human", label: "Human-Driven", color: NW.human },
+  { id: "shadow", label: "Shadow Mode", color: NW.shadow },
+  { id: "assisted", label: "Assisted Mode", color: NW.accent },
+  { id: "live", label: "Live Mode", color: NW.live },
+]
+
+/* ---------- SVG dimensions ---------- */
+const W = 1200
+const H = 520
+
+/* ---------- Stage positions along the journey rail ---------- */
+const STAGES = [
+  { id: 1, label: "Application", x: 120 },
+  { id: 2, label: "Identity", x: 260 },
+  { id: 3, label: "Business", x: 400 },
+  { id: 4, label: "Ownership", x: 540 },
+  { id: 5, label: "Financials", x: 680 },
+  { id: 6, label: "Risk", x: 820 },
+  { id: 7, label: "TM Setup", x: 960 },
 ]
 
 /* ---------- Main Component ---------- */
 export function AdoptionJourney() {
-  const [activePhase, setActivePhase] = useState(0)
+  const [phase, setPhase] = useState<PhaseId>("human")
   const [playing, setPlaying] = useState(true)
 
-  // Auto-advance phases
+  // Auto-advance phases for demo
   useEffect(() => {
     if (!playing) return
     const interval = setInterval(() => {
-      setActivePhase((p) => (p + 1) % PHASES.length)
-    }, 5000)
+      setPhase((p) => {
+        const idx = PHASES.findIndex((ph) => ph.id === p)
+        return PHASES[(idx + 1) % PHASES.length].id
+      })
+    }, 4500)
     return () => clearInterval(interval)
   }, [playing])
 
-  const phase = PHASES[activePhase]
+  const phaseIdx = PHASES.findIndex((p) => p.id === phase)
 
   return (
     <main className="min-h-screen bg-background">
       <div className="nw-grid-bg min-h-screen">
-        <div className="mx-auto max-w-[1400px] px-4 py-6 sm:px-6">
+        <div className="mx-auto max-w-[1300px] px-4 py-6 sm:px-6">
           {/* Header */}
           <header className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <Link
-                href="/flow"
-                className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground"
-              >
-                <ArrowLeft className="size-3.5" />
-                Back to Flow
+            <div className="flex items-center gap-3">
+              <Link href="/flow">
+                <Button variant="ghost" size="sm" className="gap-1.5">
+                  <ArrowLeft className="size-4" />
+                  Back to Flow
+                </Button>
               </Link>
-              <h1
-                className="mt-1 text-2xl font-bold tracking-tight sm:text-3xl"
-                style={{ color: NW.primary }}
-              >
-                Agent Adoption Roadmap
-              </h1>
-              <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
-                How agents integrate into the onboarding journey — from shadow testing to full automation.
-              </p>
+              <div>
+                <h1
+                  className="flex items-center gap-2 text-xl font-bold sm:text-2xl"
+                  style={{ color: NW.primary }}
+                >
+                  <Layers className="size-5" />
+                  Agent Adoption Roadmap
+                </h1>
+                <p className="text-sm text-muted-foreground">
+                  How agents integrate into the onboarding journey
+                </p>
+              </div>
             </div>
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setPlaying((p) => !p)}
-                className="gap-1.5"
-              >
-                {playing ? <Pause className="size-3.5" /> : <Play className="size-3.5" />}
-                {playing ? "Pause" : "Play"}
-              </Button>
-            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setPlaying((p) => !p)}
+              className="gap-1.5"
+            >
+              {playing ? <Pause className="size-3.5" /> : <Play className="size-3.5" />}
+              {playing ? "Pause" : "Play"}
+            </Button>
           </header>
 
-          {/* Phase selector */}
-          <nav className="mt-6 flex flex-wrap items-center gap-2">
-            {PHASES.map((p, i) => (
-              <button
-                key={p.id}
-                onClick={() => {
-                  setActivePhase(i)
-                  setPlaying(false)
-                }}
-                className={`relative flex items-center gap-2 rounded-full border-2 px-4 py-2 text-sm font-semibold transition ${
-                  activePhase === i
-                    ? "text-white shadow-md"
-                    : "bg-card text-muted-foreground hover:border-current"
-                }`}
-                style={{
-                  borderColor: p.color,
-                  background: activePhase === i ? p.color : undefined,
-                }}
-              >
-                <p.icon className="size-4" />
-                <span className="hidden sm:inline">{p.title}</span>
-                <span className="sm:hidden">Phase {p.number}</span>
-                {activePhase === i && (
-                  <span
-                    className="absolute -bottom-1 left-1/2 size-2 -translate-x-1/2 rotate-45"
-                    style={{ background: p.color }}
-                  />
-                )}
-              </button>
-            ))}
-          </nav>
-
-          {/* Main visualization */}
-          <section className="mt-6 grid gap-6 lg:grid-cols-[1fr_380px]">
-            {/* Left: Phase diagram */}
-            <div
-              className="relative overflow-hidden rounded-2xl border-2 bg-card p-4 shadow-sm sm:p-6"
-              style={{ borderColor: `${phase.color}33` }}
-            >
-              <PhaseVisualization phase={phase} phaseIndex={activePhase} />
-            </div>
-
-            {/* Right: Phase details + pilot agents */}
-            <aside className="space-y-4">
-              {/* Phase card */}
-              <div
-                className="rounded-2xl border-2 bg-card p-4 shadow-sm"
-                style={{ borderColor: `${phase.color}55` }}
-              >
-                <div
-                  className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest"
-                  style={{ color: phase.color }}
+          {/* Phase selector pills */}
+          <div className="mt-5 flex flex-wrap items-center gap-2">
+            {PHASES.map((p, i) => {
+              const active = p.id === phase
+              return (
+                <button
+                  key={p.id}
+                  onClick={() => setPhase(p.id)}
+                  className="flex items-center gap-1.5 rounded-full border-2 px-3 py-1.5 text-xs font-semibold transition"
+                  style={{
+                    borderColor: active ? p.color : `${p.color}44`,
+                    background: active ? p.color : "transparent",
+                    color: active ? "#fff" : p.color,
+                  }}
                 >
-                  <phase.icon className="size-4" />
-                  Phase {phase.number}: {phase.subtitle}
-                </div>
-                <h2 className="mt-2 text-lg font-bold" style={{ color: phase.color }}>
-                  {phase.title}
-                </h2>
-                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                  {phase.desc}
-                </p>
+                  <span
+                    className="flex size-5 items-center justify-center rounded-full text-[10px] font-bold"
+                    style={{
+                      background: active ? "#fff" : p.color,
+                      color: active ? p.color : "#fff",
+                    }}
+                  >
+                    {i + 1}
+                  </span>
+                  {p.label}
+                </button>
+              )
+            })}
+          </div>
 
-                {/* Progress indicator */}
-                <div className="mt-4 flex items-center gap-1">
-                  {PHASES.map((_, i) => (
-                    <div
-                      key={i}
-                      className="h-1.5 flex-1 rounded-full transition-all"
-                      style={{
-                        background: i <= activePhase ? phase.color : "#e2e8f0",
-                      }}
+          {/* Main SVG flow diagram */}
+          <div className="mt-5 overflow-x-auto rounded-2xl border-2 bg-card shadow-sm" style={{ borderColor: `${NW.primary}22` }}>
+            <svg
+              viewBox={`0 0 ${W} ${H}`}
+              className="w-full min-w-[900px]"
+              style={{ background: `linear-gradient(180deg, ${NW.bg}, #fff)` }}
+            >
+              <defs>
+                {/* Animated dash pattern */}
+                <pattern id="dashFlow" width="16" height="1" patternUnits="userSpaceOnUse">
+                  <rect width="8" height="1" fill={NW.primary}>
+                    <animate attributeName="x" from="0" to="16" dur="0.8s" repeatCount="indefinite" />
+                  </rect>
+                </pattern>
+                {/* Agent glow filter */}
+                <filter id="agentGlow" x="-50%" y="-50%" width="200%" height="200%">
+                  <feGaussianBlur stdDeviation="3" result="blur" />
+                  <feMerge>
+                    <feMergeNode in="blur" />
+                    <feMergeNode in="SourceGraphic" />
+                  </feMerge>
+                </filter>
+                {/* Data particle gradient */}
+                {AGENTS.map((a) => (
+                  <radialGradient key={a.id} id={`grad-${a.id}`}>
+                    <stop offset="0%" stopColor={a.color} />
+                    <stop offset="100%" stopColor={a.color} stopOpacity="0.3" />
+                  </radialGradient>
+                ))}
+              </defs>
+
+              {/* ========== Lane labels ========== */}
+              <text x="30" y="95" fontSize="11" fontWeight="800" fill={NW.human} letterSpacing="2">
+                HUMAN JOURNEY
+              </text>
+              {phase !== "human" && (
+                <text x="30" y="275" fontSize="11" fontWeight="800" fill={NW.primary} letterSpacing="2" className="animate-draw-in">
+                  AGENT LAYER
+                </text>
+              )}
+              {(phase === "assisted" || phase === "live") && (
+                <text x="30" y="440" fontSize="11" fontWeight="800" fill={NW.live} letterSpacing="2" className="animate-draw-in">
+                  ANALYST OUTPUT
+                </text>
+              )}
+
+              {/* ========== HUMAN JOURNEY RAIL (always visible) ========== */}
+              <g>
+                {/* Rail background */}
+                <line
+                  x1="80"
+                  y1="140"
+                  x2="1050"
+                  y2="140"
+                  stroke={`${NW.human}33`}
+                  strokeWidth="8"
+                  strokeLinecap="round"
+                />
+                {/* Rail animated dashes */}
+                <line
+                  x1="80"
+                  y1="140"
+                  x2="1050"
+                  y2="140"
+                  stroke={NW.human}
+                  strokeWidth="3"
+                  strokeDasharray="12 8"
+                  strokeLinecap="round"
+                  className="animate-flow-dash"
+                />
+                {/* Stage nodes */}
+                {STAGES.map((s) => (
+                  <g key={s.id}>
+                    {/* Node circle */}
+                    <circle
+                      cx={s.x}
+                      cy="140"
+                      r="22"
+                      fill="#fff"
+                      stroke={NW.human}
+                      strokeWidth="3"
                     />
-                  ))}
-                </div>
-              </div>
+                    <text
+                      x={s.x}
+                      y="145"
+                      textAnchor="middle"
+                      fontSize="13"
+                      fontWeight="700"
+                      fill={NW.human}
+                    >
+                      S{s.id}
+                    </text>
+                    {/* Label below */}
+                    <text
+                      x={s.x}
+                      y="178"
+                      textAnchor="middle"
+                      fontSize="10"
+                      fill={NW.muted}
+                      fontWeight="500"
+                    >
+                      {s.label}
+                    </text>
+                    {/* Analyst icon for human phase */}
+                    {phase === "human" && (
+                      <g className="animate-draw-in">
+                        <circle cx={s.x} cy="210" r="14" fill={`${NW.human}15`} stroke={NW.human} strokeWidth="1.5" />
+                        <User x={s.x - 6} y="204" width="12" height="12" stroke={NW.human} strokeWidth="1.5" fill="none" />
+                      </g>
+                    )}
+                  </g>
+                ))}
+                {/* Travelling case marker on human rail */}
+                <circle r="8" fill={NW.human} filter="url(#agentGlow)">
+                  <animateMotion dur="6s" repeatCount="indefinite" path={`M80,140 L1050,140`} />
+                </circle>
+              </g>
 
-              {/* Pilot agents */}
-              <div className="rounded-2xl border bg-card p-4 shadow-sm">
-                <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-muted-foreground">
-                  <Sparkles className="size-3.5" />
-                  Pilot Agents
-                </div>
-                <p className="mt-1 text-[11px] text-muted-foreground">
-                  These agents are first to adopt — high impact, measurable outcomes.
-                </p>
-                <div className="mt-3 space-y-2">
-                  {PILOT_AGENTS.map((agent) => (
-                    <AgentChip key={agent.id} agent={agent} phaseIndex={activePhase} />
-                  ))}
-                </div>
-              </div>
-            </aside>
-          </section>
+              {/* ========== SHADOW MODE: Parallel agent rail with data flowing DOWN ========== */}
+              {phase !== "human" && (
+                <g className="animate-draw-in">
+                  {/* Agent rail */}
+                  <line
+                    x1="80"
+                    y1="320"
+                    x2="1050"
+                    y2="320"
+                    stroke={`${NW.primary}33`}
+                    strokeWidth="8"
+                    strokeLinecap="round"
+                  />
+                  <line
+                    x1="80"
+                    y1="320"
+                    x2="1050"
+                    y2="320"
+                    stroke={NW.primary}
+                    strokeWidth="3"
+                    strokeDasharray="12 8"
+                    strokeLinecap="round"
+                    className="animate-flow-dash"
+                  />
 
-          {/* Benefits by phase */}
-          <section className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {PHASES.map((p, i) => (
-              <BenefitCard key={p.id} phase={p} active={i === activePhase} />
-            ))}
-          </section>
+                  {/* Data flow arrows from human rail DOWN to agent rail */}
+                  {STAGES.slice(1, 6).map((s, i) => {
+                    const agent = AGENTS[i % AGENTS.length]
+                    return (
+                      <g key={`flow-${s.id}`}>
+                        {/* Vertical dashed line */}
+                        <line
+                          x1={s.x}
+                          y1="165"
+                          x2={s.x}
+                          y2="295"
+                          stroke={agent.color}
+                          strokeWidth="2"
+                          strokeDasharray="6 4"
+                          opacity="0.6"
+                        />
+                        {/* Arrow head */}
+                        <polygon
+                          points={`${s.x},295 ${s.x - 6},280 ${s.x + 6},280`}
+                          fill={agent.color}
+                          opacity="0.8"
+                        />
+                        {/* Animated data particle flowing down */}
+                        <circle r="5" fill={`url(#grad-${agent.id})`}>
+                          <animateMotion
+                            dur="1.5s"
+                            repeatCount="indefinite"
+                            path={`M${s.x},165 L${s.x},290`}
+                            begin={`${i * 0.3}s`}
+                          />
+                        </circle>
+                        {/* "Data" label */}
+                        <text
+                          x={s.x + 12}
+                          y="230"
+                          fontSize="9"
+                          fill={agent.color}
+                          fontWeight="600"
+                          opacity="0.8"
+                        >
+                          data
+                        </text>
+                      </g>
+                    )
+                  })}
 
-          {/* Detailed agent cards */}
-          <section className="mt-8">
-            <h2 className="text-lg font-bold" style={{ color: NW.primary }}>
-              Pilot Agent Details
-            </h2>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Each agent consumes journey data, processes it, and produces structured outputs for analyst review.
-            </p>
-            <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              {PILOT_AGENTS.map((agent) => (
-                <AgentDetailCard key={agent.id} agent={agent} />
-              ))}
+                  {/* Agent nodes on agent rail */}
+                  {AGENTS.map((agent, i) => {
+                    const x = 260 + i * 180
+                    return (
+                      <g key={agent.id}>
+                        <circle
+                          cx={x}
+                          cy="320"
+                          r="24"
+                          fill="#fff"
+                          stroke={agent.color}
+                          strokeWidth="3"
+                          filter="url(#agentGlow)"
+                        />
+                        <agent.Icon
+                          x={x - 10}
+                          y="310"
+                          width="20"
+                          height="20"
+                          stroke={agent.color}
+                          strokeWidth="1.8"
+                          fill="none"
+                        />
+                        {/* Agent name below */}
+                        <text
+                          x={x}
+                          y="360"
+                          textAnchor="middle"
+                          fontSize="10"
+                          fontWeight="700"
+                          fill={agent.color}
+                        >
+                          {agent.short}
+                        </text>
+                        {/* Status badge */}
+                        <rect
+                          x={x - 22}
+                          y="370"
+                          width="44"
+                          height="16"
+                          rx="8"
+                          fill={phase === "shadow" ? NW.shadow : phase === "assisted" ? NW.accent : NW.live}
+                          opacity="0.9"
+                        />
+                        <text
+                          x={x}
+                          y="381"
+                          textAnchor="middle"
+                          fontSize="8"
+                          fontWeight="700"
+                          fill="#fff"
+                        >
+                          {phase === "shadow" ? "TESTING" : phase === "assisted" ? "ASSIST" : "LIVE"}
+                        </text>
+                      </g>
+                    )
+                  })}
+
+                  {/* Travelling case marker on agent rail */}
+                  <circle r="7" fill={NW.accent}>
+                    <animateMotion dur="5s" repeatCount="indefinite" path={`M80,320 L1050,320`} />
+                  </circle>
+                </g>
+              )}
+
+              {/* ========== ASSISTED/LIVE: Output flows UP to analyst ========== */}
+              {(phase === "assisted" || phase === "live") && (
+                <g className="animate-draw-in">
+                  {/* Analyst output area */}
+                  <rect
+                    x="200"
+                    y="420"
+                    width="700"
+                    height="70"
+                    rx="12"
+                    fill={`${NW.live}08`}
+                    stroke={NW.live}
+                    strokeWidth="2"
+                    strokeDasharray="8 4"
+                  />
+                  <text x="550" y="448" textAnchor="middle" fontSize="11" fontWeight="700" fill={NW.live}>
+                    {phase === "assisted"
+                      ? "ANALYST REVIEWS AGENT RECOMMENDATIONS"
+                      : "HUMAN OVERSIGHT — APPROVE / OVERRIDE"}
+                  </text>
+                  <text x="550" y="468" textAnchor="middle" fontSize="10" fill={NW.muted}>
+                    {phase === "assisted"
+                      ? "Agent outputs surface as recommendations; analyst approves or overrides"
+                      : "Agents drive the journey; human confirms decisions (EU AI Act)"}
+                  </text>
+
+                  {/* Output arrows from agent rail UP to analyst area */}
+                  {AGENTS.map((agent, i) => {
+                    const x = 260 + i * 180
+                    return (
+                      <g key={`out-${agent.id}`}>
+                        <line
+                          x1={x}
+                          y1="390"
+                          x2={x}
+                          y2="418"
+                          stroke={agent.color}
+                          strokeWidth="2"
+                          strokeDasharray="4 3"
+                          opacity="0.7"
+                        />
+                        <polygon
+                          points={`${x},418 ${x - 5},408 ${x + 5},408`}
+                          fill={agent.color}
+                          opacity="0.8"
+                        />
+                        {/* Output particle */}
+                        <circle r="4" fill={agent.color}>
+                          <animateMotion
+                            dur="1.2s"
+                            repeatCount="indefinite"
+                            path={`M${x},390 L${x},415`}
+                            begin={`${i * 0.25}s`}
+                          />
+                        </circle>
+                      </g>
+                    )
+                  })}
+                </g>
+              )}
+
+              {/* ========== LIVE MODE: Agents merge INTO the journey ========== */}
+              {phase === "live" && (
+                <g className="animate-draw-in">
+                  {/* Merge arrows from agent rail UP to human rail */}
+                  {AGENTS.map((agent, i) => {
+                    const ax = 260 + i * 180
+                    const hx = STAGES[i + 1]?.x ?? ax
+                    return (
+                      <g key={`merge-${agent.id}`}>
+                        <path
+                          d={`M${ax},296 Q${ax},230 ${hx},165`}
+                          fill="none"
+                          stroke={agent.color}
+                          strokeWidth="2.5"
+                          strokeDasharray="6 4"
+                          opacity="0.7"
+                        />
+                        {/* Merge particle */}
+                        <circle r="6" fill={agent.color} filter="url(#agentGlow)">
+                          <animateMotion
+                            dur="2s"
+                            repeatCount="indefinite"
+                            path={`M${ax},296 Q${ax},230 ${hx},165`}
+                            begin={`${i * 0.4}s`}
+                          />
+                        </circle>
+                        {/* "Integrated" badge on human rail */}
+                        <rect
+                          x={hx - 28}
+                          y="105"
+                          width="56"
+                          height="18"
+                          rx="9"
+                          fill={NW.live}
+                        />
+                        <text x={hx} y="117" textAnchor="middle" fontSize="8" fontWeight="700" fill="#fff">
+                          INTEGRATED
+                        </text>
+                      </g>
+                    )
+                  })}
+                </g>
+              )}
+
+              {/* ========== Legend ========== */}
+              <g transform="translate(1030, 100)">
+                <rect x="0" y="0" width="150" height="140" rx="10" fill="#fff" stroke={`${NW.primary}22`} strokeWidth="1.5" />
+                <text x="12" y="22" fontSize="10" fontWeight="800" fill={NW.primary} letterSpacing="1">
+                  LEGEND
+                </text>
+                {/* Human journey */}
+                <circle cx="22" cy="45" r="6" fill={NW.human} />
+                <text x="36" y="49" fontSize="9" fill={NW.muted}>Human Journey</text>
+                {/* Agent layer */}
+                <circle cx="22" cy="70" r="6" fill={NW.primary} />
+                <text x="36" y="74" fontSize="9" fill={NW.muted}>Agent Layer</text>
+                {/* Data flow */}
+                <line x1="16" y1="95" x2="28" y2="95" stroke={NW.accent} strokeWidth="2" strokeDasharray="4 2" />
+                <text x="36" y="99" fontSize="9" fill={NW.muted}>Data Flow</text>
+                {/* Integration */}
+                <line x1="16" y1="120" x2="28" y2="120" stroke={NW.live} strokeWidth="2" />
+                <text x="36" y="124" fontSize="9" fill={NW.muted}>Integration</text>
+              </g>
+            </svg>
+          </div>
+
+          {/* Phase description card */}
+          <div
+            className="mt-4 rounded-xl border-2 p-4"
+            style={{
+              borderColor: PHASES[phaseIdx].color,
+              background: `${PHASES[phaseIdx].color}08`,
+            }}
+          >
+            <div className="flex items-center gap-2">
+              <span
+                className="flex size-7 items-center justify-center rounded-full text-sm font-bold text-white"
+                style={{ background: PHASES[phaseIdx].color }}
+              >
+                {phaseIdx + 1}
+              </span>
+              <h2 className="text-lg font-bold" style={{ color: PHASES[phaseIdx].color }}>
+                {PHASES[phaseIdx].label}
+              </h2>
             </div>
-          </section>
+            <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
+              {phaseIdx === 0 &&
+                "Analysts manually process every application through all 7 stages. Documents reviewed by eye, registries checked by hand, decisions made case-by-case. Average cycle time: 5-7 days."}
+              {phaseIdx === 1 &&
+                "Agents run in parallel, consuming the same journey data as analysts. They produce outputs for comparison but don't drive decisions. This lets us measure accuracy, catch edge cases and build trust — zero risk."}
+              {phaseIdx === 2 &&
+                "High-confidence agent outputs surface as recommendations. Analysts approve, override or escalate. Cycle time drops to 2-3 days, consistency rises, audit trail improves."}
+              {phaseIdx === 3 &&
+                "Agents become part of the journey itself — processing, deciding and handing off automatically. Humans provide EU AI Act oversight and handle exceptions only. Cycle time: hours, not days."}
+            </p>
+          </div>
+
+          {/* Pilot agents row */}
+          <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            {AGENTS.map((a) => (
+              <div
+                key={a.id}
+                className="flex items-center gap-3 rounded-xl border p-3"
+                style={{ borderColor: `${a.color}44` }}
+              >
+                <span
+                  className="flex size-9 shrink-0 items-center justify-center rounded-lg"
+                  style={{ background: `${a.color}15` }}
+                >
+                  <a.Icon className="size-5" style={{ color: a.color }} />
+                </span>
+                <div className="min-w-0">
+                  <div className="truncate text-sm font-semibold" style={{ color: a.color }}>
+                    {a.name}
+                  </div>
+                  <div className="text-[11px] text-muted-foreground">Pilot Agent</div>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </main>
-  )
-}
-
-/* ---------- Phase Visualization ---------- */
-function PhaseVisualization({
-  phase,
-  phaseIndex,
-}: {
-  phase: (typeof PHASES)[0]
-  phaseIndex: number
-}) {
-  const isHuman = phaseIndex === 0
-  const isShadow = phaseIndex === 1
-  const isAssisted = phaseIndex === 2
-  const isLive = phaseIndex === 3
-
-  return (
-    <div className="relative min-h-[420px]">
-      {/* Title */}
-      <div className="mb-4 flex items-center gap-2">
-        <phase.icon className="size-5" style={{ color: phase.color }} />
-        <span className="text-sm font-bold" style={{ color: phase.color }}>
-          {phase.title}
-        </span>
-      </div>
-
-      {/* Journey rail (always present) */}
-      <div className="relative">
-        {/* Human journey lane */}
-        <div
-          className="relative rounded-xl border-2 p-4"
-          style={{
-            borderColor: `${NW.human}44`,
-            background: `${NW.human}08`,
-          }}
-        >
-          <div
-            className="mb-3 flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest"
-            style={{ color: NW.human }}
-          >
-            <Users className="size-3.5" />
-            Onboarding Journey {isHuman ? "(Human-Driven)" : "(Data Source)"}
-          </div>
-
-          {/* 7 stage chips */}
-          <div className="flex flex-wrap gap-2">
-            {[
-              "Application",
-              "Identity",
-              "Business",
-              "Ownership",
-              "Financials",
-              "Risk",
-              "Monitoring",
-            ].map((stage, i) => (
-              <div
-                key={stage}
-                className="flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-medium"
-                style={{
-                  borderColor: `${NW.human}44`,
-                  color: NW.human,
-                  background: isHuman ? `${NW.human}15` : "white",
-                }}
-              >
-                <span
-                  className="flex size-4 items-center justify-center rounded-full text-[9px] font-bold text-white"
-                  style={{ background: NW.human }}
-                >
-                  {i + 1}
-                </span>
-                {stage}
-              </div>
-            ))}
-          </div>
-
-          {/* Analyst indicator for human phase */}
-          {isHuman && (
-            <div className="mt-4 flex items-center gap-2 rounded-lg border bg-white p-3" style={{ borderColor: `${NW.human}33` }}>
-              <div
-                className="flex size-10 items-center justify-center rounded-full"
-                style={{ background: `${NW.human}15` }}
-              >
-                <User className="size-5" style={{ color: NW.human }} />
-              </div>
-              <div>
-                <div className="text-sm font-semibold" style={{ color: NW.human }}>
-                  Human Analyst
-                </div>
-                <div className="text-[11px] text-muted-foreground">
-                  Manually processes every step
-                </div>
-              </div>
-              <div className="ml-auto text-right">
-                <div className="text-lg font-bold" style={{ color: NW.human }}>
-                  5-7 days
-                </div>
-                <div className="text-[10px] text-muted-foreground">avg cycle time</div>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Data flow arrows (shadow/assisted/live) */}
-        {!isHuman && (
-          <div className="my-3 flex justify-center">
-            <div className="flex flex-col items-center gap-1">
-              <div
-                className="flex size-6 items-center justify-center rounded-full animate-bounce"
-                style={{ background: phase.color }}
-              >
-                <ChevronRight className="size-4 rotate-90 text-white" />
-              </div>
-              <span className="text-[9px] font-semibold uppercase tracking-wider" style={{ color: phase.color }}>
-                {isShadow ? "Data flows to agents" : isAssisted ? "Outputs flow up" : "Agents drive journey"}
-              </span>
-            </div>
-          </div>
-        )}
-
-        {/* Agent layer (shadow/assisted/live) */}
-        {!isHuman && (
-          <div
-            className="relative rounded-xl border-2 p-4"
-            style={{
-              borderColor: `${phase.color}44`,
-              background: `${phase.color}08`,
-            }}
-          >
-            <div
-              className="mb-3 flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest"
-              style={{ color: phase.color }}
-            >
-              <Bot className="size-3.5" />
-              {isShadow
-                ? "Agent Layer (Shadow — Testing)"
-                : isAssisted
-                ? "Agent Layer (Assisted — Recommending)"
-                : "Agent Layer (Live — Driving)"}
-            </div>
-
-            {/* Pilot agents */}
-            <div className="grid gap-2 sm:grid-cols-2">
-              {PILOT_AGENTS.map((agent, i) => (
-                <div
-                  key={agent.id}
-                  className="relative overflow-hidden rounded-lg border bg-white p-3"
-                  style={{
-                    borderColor: `${agent.color}44`,
-                    animationDelay: `${i * 150}ms`,
-                  }}
-                >
-                  {/* Processing indicator */}
-                  {(isShadow || isAssisted || isLive) && (
-                    <div
-                      className="absolute inset-x-0 top-0 h-0.5 animate-pulse"
-                      style={{ background: agent.color }}
-                    />
-                  )}
-                  <div className="flex items-center gap-2">
-                    <div
-                      className="flex size-8 items-center justify-center rounded-lg"
-                      style={{ background: `${agent.color}15` }}
-                    >
-                      <agent.icon className="size-4" style={{ color: agent.color }} />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="truncate text-sm font-semibold" style={{ color: agent.color }}>
-                        {agent.short}
-                      </div>
-                      <div className="text-[10px] text-muted-foreground">
-                        {isShadow ? "Testing" : isAssisted ? "Recommending" : "Autonomous"}
-                      </div>
-                    </div>
-                    <StatusBadge phase={phaseIndex} />
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* Output indicator */}
-            {(isAssisted || isLive) && (
-              <div className="mt-3 flex items-center gap-2 rounded-lg border bg-white p-2" style={{ borderColor: `${phase.color}33` }}>
-                <CheckCircle2 className="size-4" style={{ color: phase.color }} />
-                <span className="text-[11px] font-medium" style={{ color: phase.color }}>
-                  {isAssisted
-                    ? "Agent outputs surfaced as recommendations to analysts"
-                    : "Agents auto-process, humans provide EU AI Act oversight only"}
-                </span>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Shadow mode: analyst still deciding */}
-        {isShadow && (
-          <>
-            <div className="my-3 flex justify-center">
-              <div className="flex flex-col items-center gap-1">
-                <div
-                  className="flex size-6 items-center justify-center rounded-full animate-bounce"
-                  style={{ background: NW.human, animationDelay: "300ms" }}
-                >
-                  <ChevronRight className="size-4 -rotate-90 text-white" />
-                </div>
-                <span className="text-[9px] font-semibold uppercase tracking-wider" style={{ color: NW.human }}>
-                  Analyst compares outputs
-                </span>
-              </div>
-            </div>
-            <div
-              className="rounded-xl border-2 p-4"
-              style={{
-                borderColor: `${NW.human}44`,
-                background: `${NW.human}08`,
-              }}
-            >
-              <div className="flex items-center gap-3">
-                <div
-                  className="flex size-10 items-center justify-center rounded-full"
-                  style={{ background: `${NW.human}15` }}
-                >
-                  <User className="size-5" style={{ color: NW.human }} />
-                </div>
-                <div>
-                  <div className="text-sm font-semibold" style={{ color: NW.human }}>
-                    Analyst Review
-                  </div>
-                  <div className="text-[11px] text-muted-foreground">
-                    Compares own work to agent output — builds trust, catches edge cases
-                  </div>
-                </div>
-              </div>
-            </div>
-          </>
-        )}
-
-        {/* Assisted mode: analyst approves */}
-        {isAssisted && (
-          <>
-            <div className="my-3 flex justify-center">
-              <div className="flex flex-col items-center gap-1">
-                <div
-                  className="flex size-6 items-center justify-center rounded-full animate-bounce"
-                  style={{ background: NW.human, animationDelay: "300ms" }}
-                >
-                  <ChevronRight className="size-4 -rotate-90 text-white" />
-                </div>
-                <span className="text-[9px] font-semibold uppercase tracking-wider" style={{ color: NW.human }}>
-                  Analyst approves / overrides
-                </span>
-              </div>
-            </div>
-            <div
-              className="rounded-xl border-2 p-4"
-              style={{
-                borderColor: `${NW.human}44`,
-                background: `${NW.human}08`,
-              }}
-            >
-              <div className="flex items-center gap-3">
-                <div
-                  className="flex size-10 items-center justify-center rounded-full"
-                  style={{ background: `${NW.human}15` }}
-                >
-                  <CheckCircle2 className="size-5" style={{ color: NW.human }} />
-                </div>
-                <div>
-                  <div className="text-sm font-semibold" style={{ color: NW.human }}>
-                    Analyst Approval
-                  </div>
-                  <div className="text-[11px] text-muted-foreground">
-                    Reviews agent recommendation, approves or overrides
-                  </div>
-                </div>
-                <div className="ml-auto text-right">
-                  <div className="text-lg font-bold" style={{ color: NW.accent }}>
-                    2-3 days
-                  </div>
-                  <div className="text-[10px] text-muted-foreground">avg cycle time</div>
-                </div>
-              </div>
-            </div>
-          </>
-        )}
-
-        {/* Live mode: human oversight only */}
-        {isLive && (
-          <>
-            <div className="my-3 flex justify-center">
-              <div className="flex flex-col items-center gap-1">
-                <div
-                  className="flex size-6 items-center justify-center rounded-full animate-pulse"
-                  style={{ background: NW.live }}
-                >
-                  <Eye className="size-3.5 text-white" />
-                </div>
-                <span className="text-[9px] font-semibold uppercase tracking-wider" style={{ color: NW.live }}>
-                  Human oversight (EU AI Act)
-                </span>
-              </div>
-            </div>
-            <div
-              className="rounded-xl border-2 p-4"
-              style={{
-                borderColor: `${NW.live}44`,
-                background: `${NW.live}08`,
-              }}
-            >
-              <div className="flex items-center gap-3">
-                <div
-                  className="flex size-10 items-center justify-center rounded-full"
-                  style={{ background: `${NW.live}15` }}
-                >
-                  <Eye className="size-5" style={{ color: NW.live }} />
-                </div>
-                <div>
-                  <div className="text-sm font-semibold" style={{ color: NW.live }}>
-                    Oversight Only
-                  </div>
-                  <div className="text-[11px] text-muted-foreground">
-                    Human reviews agent decisions — intervenes on exceptions only
-                  </div>
-                </div>
-                <div className="ml-auto text-right">
-                  <div className="text-lg font-bold" style={{ color: NW.live }}>
-                    4-8 hours
-                  </div>
-                  <div className="text-[10px] text-muted-foreground">avg cycle time</div>
-                </div>
-              </div>
-            </div>
-          </>
-        )}
-      </div>
-    </div>
-  )
-}
-
-/* ---------- Status Badge ---------- */
-function StatusBadge({ phase }: { phase: number }) {
-  if (phase === 0) return null
-  if (phase === 1)
-    return (
-      <span
-        className="rounded-full px-2 py-0.5 text-[9px] font-bold uppercase"
-        style={{ background: `${NW.shadow}20`, color: NW.shadow }}
-      >
-        Shadow
-      </span>
-    )
-  if (phase === 2)
-    return (
-      <span
-        className="rounded-full px-2 py-0.5 text-[9px] font-bold uppercase"
-        style={{ background: `${NW.accent}20`, color: NW.accent }}
-      >
-        Assist
-      </span>
-    )
-  return (
-    <span
-      className="rounded-full px-2 py-0.5 text-[9px] font-bold uppercase"
-      style={{ background: `${NW.live}20`, color: NW.live }}
-    >
-      Live
-    </span>
-  )
-}
-
-/* ---------- Agent Chip ---------- */
-function AgentChip({
-  agent,
-  phaseIndex,
-}: {
-  agent: (typeof PILOT_AGENTS)[0]
-  phaseIndex: number
-}) {
-  return (
-    <div
-      className="flex items-center gap-2 rounded-lg border p-2 transition hover:shadow-sm"
-      style={{ borderColor: `${agent.color}33` }}
-    >
-      <div
-        className="flex size-7 items-center justify-center rounded-lg"
-        style={{ background: `${agent.color}15` }}
-      >
-        <agent.icon className="size-3.5" style={{ color: agent.color }} />
-      </div>
-      <div className="flex-1 min-w-0">
-        <div className="truncate text-xs font-semibold" style={{ color: agent.color }}>
-          {agent.name}
-        </div>
-      </div>
-      <StatusBadge phase={phaseIndex} />
-    </div>
-  )
-}
-
-/* ---------- Benefit Card ---------- */
-function BenefitCard({
-  phase,
-  active,
-}: {
-  phase: (typeof PHASES)[0]
-  active: boolean
-}) {
-  const benefits: Record<string, string[]> = {
-    human: ["Full control", "No tech dependency", "Slow & manual", "Inconsistent"],
-    shadow: ["Zero risk testing", "Accuracy measurement", "Edge case capture", "Trust building"],
-    assisted: ["Faster processing", "Consistency gains", "Audit trail", "Analyst upskill"],
-    live: ["Hours not days", "Scalable", "EU AI Act compliant", "Exception-only human"],
-  }
-
-  return (
-    <div
-      className={`rounded-xl border-2 p-4 transition ${active ? "shadow-md" : "opacity-60"}`}
-      style={{
-        borderColor: active ? phase.color : "#e2e8f0",
-        background: active ? `${phase.color}08` : undefined,
-      }}
-    >
-      <div
-        className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest"
-        style={{ color: phase.color }}
-      >
-        <phase.icon className="size-3.5" />
-        Phase {phase.number}
-      </div>
-      <div className="mt-2 text-sm font-semibold" style={{ color: phase.color }}>
-        {phase.title}
-      </div>
-      <ul className="mt-2 space-y-1">
-        {benefits[phase.id].map((b, i) => (
-          <li
-            key={i}
-            className="flex items-center gap-1.5 text-[11px]"
-            style={{ color: i < 2 ? phase.color : NW.muted }}
-          >
-            {i < 2 ? (
-              <CheckCircle2 className="size-3" />
-            ) : (
-              <Clock className="size-3 opacity-50" />
-            )}
-            {b}
-          </li>
-        ))}
-      </ul>
-    </div>
-  )
-}
-
-/* ---------- Agent Detail Card ---------- */
-function AgentDetailCard({ agent }: { agent: (typeof PILOT_AGENTS)[0] }) {
-  return (
-    <div
-      className="rounded-xl border-2 bg-card p-4 shadow-sm"
-      style={{ borderColor: `${agent.color}44` }}
-    >
-      <div className="flex items-center gap-2">
-        <div
-          className="flex size-10 items-center justify-center rounded-xl"
-          style={{ background: `${agent.color}15` }}
-        >
-          <agent.icon className="size-5" style={{ color: agent.color }} />
-        </div>
-        <div>
-          <div className="font-semibold" style={{ color: agent.color }}>
-            {agent.name}
-          </div>
-        </div>
-      </div>
-      <p className="mt-2 text-[11px] leading-relaxed text-muted-foreground">
-        {agent.desc}
-      </p>
-      <div className="mt-3 space-y-2">
-        <div>
-          <div className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground">
-            Inputs
-          </div>
-          <div className="mt-1 flex flex-wrap gap-1">
-            {agent.inputs.map((inp) => (
-              <span
-                key={inp}
-                className="rounded-full border px-2 py-0.5 text-[9px]"
-                style={{ borderColor: `${agent.color}33`, color: agent.color }}
-              >
-                {inp}
-              </span>
-            ))}
-          </div>
-        </div>
-        <div>
-          <div className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground">
-            Outputs
-          </div>
-          <div className="mt-1 flex flex-wrap gap-1">
-            {agent.outputs.map((out) => (
-              <span
-                key={out}
-                className="rounded-full px-2 py-0.5 text-[9px] font-medium text-white"
-                style={{ background: agent.color }}
-              >
-                {out}
-              </span>
-            ))}
-          </div>
-        </div>
-      </div>
-    </div>
   )
 }
