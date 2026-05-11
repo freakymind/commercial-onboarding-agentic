@@ -10,7 +10,6 @@ export const metadata: Metadata = {
   title: "Commercial Onboarding Journey | Agentic Operating Model",
   description:
     "From manual process steps to reusable, governed agentic capabilities across commercial onboarding.",
-  generator: "v0.app",
 }
 
 export default function RootLayout({
