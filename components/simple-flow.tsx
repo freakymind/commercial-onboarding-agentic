@@ -9,14 +9,17 @@ import {
   Bot,
   CheckCircle2,
   ChevronLeft,
+  ChevronRight,
   Cpu,
+  Eye,
   FastForward,
   Pause,
   Play,
-  Rewind,
+  RotateCcw,
   Sparkles,
   User,
   UserCheck,
+  UserCircle2,
   Users,
 } from "lucide-react"
 
@@ -46,12 +49,10 @@ type FlowRow = {
   number?: number
   name: string
   sub: string
-  agents: AgentMini[]
-  human?: {
-    role: string
-    trigger: string
-    rate: string
-  }
+  agents: { name: string; short: string }[]
+  human?: { role: string; trigger: string; rate: string }
+  // EU AI Act: Human oversight at every stage — reviewer checks agent output
+  oversight?: { role: string; action: string }
 }
 
 const ROWS: FlowRow[] = [
@@ -73,6 +74,10 @@ const ROWS: FlowRow[] = [
       { name: "Customer & Ops Comms Agent", short: "Comms" },
       { name: "Case Allocation Agent", short: "Allocation" },
     ],
+    oversight: {
+      role: "Ops Lead",
+      action: "Reviews allocation & priority before case proceeds",
+    },
   },
   {
     id: "s2",
@@ -84,6 +89,10 @@ const ROWS: FlowRow[] = [
       { name: "ID Verification Agent", short: "ID" },
       { name: "Proof of Address Agent", short: "PoA" },
     ],
+    oversight: {
+      role: "Compliance Officer",
+      action: "Approves identity match before KYC proceeds",
+    },
     human: {
       role: "Compliance Reviewer",
       trigger: "Document mismatch or low-confidence biometric match",
@@ -103,6 +112,10 @@ const ROWS: FlowRow[] = [
       { name: "Trusted Sources Agent", short: "Trust" },
       { name: "Plausibility Agent", short: "Plausibility" },
     ],
+    oversight: {
+      role: "Business Analyst",
+      action: "Reviews plausibility verdict & evidence pack",
+    },
     human: {
       role: "Business Analyst",
       trigger: "Plausibility contradictions or unusual sector",
@@ -119,6 +132,10 @@ const ROWS: FlowRow[] = [
       { name: "Ownership Mapping Agent", short: "UBO" },
       { name: "PEP & Sanctions Agent", short: "PEP" },
     ],
+    oversight: {
+      role: "KYC Analyst",
+      action: "Validates UBO chain & PEP hits before sign-off",
+    },
   },
   {
     id: "s5",
@@ -130,6 +147,10 @@ const ROWS: FlowRow[] = [
       { name: "Banking Data Agent", short: "Banking" },
       { name: "Financials Agent", short: "Financials" },
     ],
+    oversight: {
+      role: "Financial Analyst",
+      action: "Reviews turnover / flow anomalies flagged by agents",
+    },
   },
   {
     id: "s6",
@@ -141,6 +162,10 @@ const ROWS: FlowRow[] = [
       { name: "Risk Scoring Agent", short: "Risk" },
       { name: "Decision Agent", short: "Decision" },
     ],
+    oversight: {
+      role: "Risk Manager",
+      action: "Confirms or overrides agent decision before commit",
+    },
     human: {
       role: "Senior Analyst",
       trigger: "Borderline risk score or policy override required",
@@ -157,6 +182,10 @@ const ROWS: FlowRow[] = [
       { name: "Account Provisioning Agent", short: "Provision" },
       { name: "TM Setup Agent", short: "TM" },
     ],
+    oversight: {
+      role: "Ops Lead",
+      action: "Confirms account live & monitoring rules correct",
+    },
   },
   {
     id: "onboarded",
@@ -383,21 +412,21 @@ export function SimpleFlow() {
               />
             </div>
           )}
-              </section>
+            </section>
 
-              {/* Active stage detail — sticky sidebar on desktop */}
-              <aside className="lg:sticky lg:top-4 lg:self-start">
-                <ActiveDetail row={activeRow} escalated={escalated} />
-              </aside>
-            </div>
+            {/* Active stage detail — sticky sidebar on desktop */}
+            <aside className="lg:sticky lg:top-4 lg:self-start">
+              <ActiveDetail row={activeRow} escalated={escalated} />
+            </aside>
+          </div>
 
-            {/* Legend — full width below */}
-            <Legend />
-          </TabsContent>
-        </Tabs>
-      </div>
-    </main>
-  )
+          {/* Legend — full width below */}
+          <Legend />
+        </TabsContent>
+      </Tabs>
+    </div>
+  </main>
+)
 }
 
 /* ---------- Sub-components ---------- */
@@ -546,7 +575,7 @@ function Controls({
           onClick={onRestart}
           className="gap-1"
         >
-          <Rewind className="size-3.5" />
+          <RotateCcw className="size-3.5" />
           Restart
         </Button>
       </div>
@@ -1015,55 +1044,71 @@ function ActiveDetail({
         </div>
       )}
 
-      {/* Escalation or fully agentic */}
-      <div
-        className="rounded-xl border-2 border-dashed p-3"
-        style={{
-          borderColor: row.human ? `${NW.exception}55` : `${NW.ok}55`,
-          background: row.human ? `${NW.exception}08` : `${NW.ok}08`,
-        }}
-      >
-        {row.human ? (
-          <>
-            <div
-              className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest"
-              style={{ color: NW.exception }}
-            >
-              <AlertTriangle className="size-3.5" />
-              Human escalation
-            </div>
-            <div
-              className="mt-1 text-sm font-semibold"
-              style={{ color: NW.human }}
-            >
-              {row.human.role}
-            </div>
-            <p className="mt-0.5 text-[11px] leading-snug text-muted-foreground">
-              <span className="font-medium text-foreground">When:</span>{" "}
-              {row.human.trigger}.
-            </p>
-            <p
-              className="mt-1 text-[10px] font-semibold tabular-nums"
-              style={{ color: NW.exception }}
-            >
-              {row.human.rate} {escalated && "· escalating now"}
-            </p>
-          </>
-        ) : (
-          <>
-            <div
-              className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest"
-              style={{ color: NW.ok }}
-            >
-              <CheckCircle2 className="size-3.5" />
-              Fully agentic
-            </div>
-            <p className="mt-1 text-[11px] leading-snug text-muted-foreground">
-              No human in the loop. Agents complete end-to-end.
-            </p>
-          </>
-        )}
-      </div>
+      {/* EU AI Act: Human Oversight — reviewer checks agent output at each stage */}
+      {row.oversight && (
+        <div
+          className="rounded-xl border-2 p-3"
+          style={{
+            borderColor: `${NW.human}55`,
+            background: `${NW.human}08`,
+          }}
+        >
+          <div
+            className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest"
+            style={{ color: NW.human }}
+          >
+            <Eye className="size-3.5" />
+            EU AI Act — Human Oversight
+          </div>
+          <div
+            className="mt-1 text-sm font-semibold"
+            style={{ color: NW.human }}
+          >
+            {row.oversight.role}
+          </div>
+          <p className="mt-0.5 text-[11px] leading-snug text-muted-foreground">
+            {row.oversight.action}
+          </p>
+          <p className="mt-1.5 text-[10px] italic text-muted-foreground">
+            Human reviews agent output — does not do the work.
+          </p>
+        </div>
+      )}
+
+      {/* Escalation (when agents fail) */}
+      {row.human && (
+        <div
+          className="rounded-xl border-2 border-dashed p-3"
+          style={{
+            borderColor: `${NW.exception}55`,
+            background: `${NW.exception}08`,
+          }}
+        >
+          <div
+            className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest"
+            style={{ color: NW.exception }}
+          >
+            <AlertTriangle className="size-3.5" />
+            Human escalation (exception)
+          </div>
+          <div
+            className="mt-1 text-sm font-semibold"
+            style={{ color: NW.human }}
+          >
+            {row.human.role}
+          </div>
+          <p className="mt-0.5 text-[11px] leading-snug text-muted-foreground">
+            <span className="font-medium text-foreground">When:</span>{" "}
+            {row.human.trigger}.
+          </p>
+          <p
+            className="mt-1 text-[10px] font-semibold tabular-nums"
+            style={{ color: NW.exception }}
+          >
+            {row.human.rate} {escalated && "· escalating now"}
+          </p>
+        </div>
+      )}
     </section>
   )
 }
@@ -1072,24 +1117,30 @@ function ActiveDetail({
 
 function Legend() {
   return (
-    <section className="mt-4 grid gap-3 rounded-2xl border bg-card p-4 shadow-xs sm:grid-cols-3 sm:p-5">
+    <section className="mt-4 grid gap-3 rounded-2xl border bg-card p-4 shadow-xs sm:grid-cols-2 lg:grid-cols-4 sm:p-5">
       <LegendItem
-        title="Agents"
-        desc="Run continuously across all 7 stages — process documents, call registries and score risk."
+        title="Agents do the work"
+        desc="Process documents, call registries, score risk — across all 7 stages."
         icon={<Bot className="size-4" />}
         color={NW.agent}
       />
       <LegendItem
-        title="Humans"
-        desc="Step in only on exceptions: low-confidence biometrics, plausibility contradictions or borderline risk."
-        icon={<Users className="size-4" />}
+        title="Human oversight (EU AI Act)"
+        desc="At every stage a human reviews agent output before the case proceeds — but does not do the work."
+        icon={<Eye className="size-4" />}
         color={NW.human}
       />
       <LegendItem
-        title="Escalations"
-        desc="Amber dashed arrow shows a case briefly handed to a human, who returns it to the agent flow."
-        icon={<AlertTriangle className="size-4" />}
+        title="Human escalation"
+        desc="Only when agents fail or flag exceptions — human takes over briefly, then returns to agent flow."
+        icon={<Users className="size-4" />}
         color={NW.exception}
+      />
+      <LegendItem
+        title="Case flow"
+        desc="Pink = agent handled. Amber = escalated to human. Both converge to Onboarded."
+        icon={<AlertTriangle className="size-4" />}
+        color={NW.primary}
       />
     </section>
   )
