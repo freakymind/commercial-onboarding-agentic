@@ -13,6 +13,7 @@ import {
   Cpu,
   Eye,
   FastForward,
+  Layers,
   Pause,
   Play,
   RotateCcw,
@@ -293,11 +294,24 @@ export function SimpleFlow() {
             </p>
           </div>
 
-          <ProgressBadge
-            stageProgress={stageProgress}
-            totalStages={totalStages}
-            activeRow={activeRow}
-          />
+          <div className="flex flex-wrap items-center gap-2">
+            <Link href="/adoption">
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-1.5"
+                style={{ borderColor: `${NW.primary}44`, color: NW.primary }}
+              >
+                <Layers className="size-3.5" />
+                Agent Adoption Roadmap
+              </Button>
+            </Link>
+            <ProgressBadge
+              stageProgress={stageProgress}
+              totalStages={totalStages}
+              activeRow={activeRow}
+            />
+          </div>
         </header>
 
         {/* Stage pill ribbon (mirrors main page) */}
