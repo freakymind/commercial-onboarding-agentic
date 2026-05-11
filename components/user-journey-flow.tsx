@@ -42,30 +42,67 @@ const PILOT_AGENTS = [
   { id: "sic", name: "SIC Agent", short: "SIC", color: "#1a8754", desc: "Industry code validation" },
 ]
 
-/* ---------- Speed options ---------- */
-const SPEEDS = [
-  { label: "Slow", ms: 3500 },
-  { label: "Normal", ms: 2000 },
-  { label: "Fast", ms: 1000 },
+/* ---------- Speed multiplier options ---------- */
+const SPEED_MULTIPLIERS = [
+  { label: "Slow", mult: 1.5 },
+  { label: "Normal", mult: 1.0 },
+  { label: "Fast", mult: 0.5 },
+]
+
+/* ---------- Step durations for Traditional Journey (ms) - shows the slowness ---------- */
+const TRAD_STEP_DURATIONS = [
+  2000,   // 0: Customer fills form
+  1500,   // 1: Customer submits
+  2500,   // 2: Application queued (waiting in queue)
+  4000,   // 3: Analyst reviews (slow manual check)
+  2500,   // 4: ISSUE FOUND!
+  2000,   // 5: Contact customer
+  8000,   // 6: WAITING 2-5 DAYS - THE BIG DELAY
+  2000,   // 7: Customer responds
+  3500,   // 8: Re-review (another slow check)
+  2000,   // 9: Approved
+]
+
+/* ---------- Step durations for Agent Journey (ms) - shows the speed ---------- */
+const AGENT_STEP_DURATIONS = [
+  1500,   // 0: Customer starts
+  2000,   // 1: SOF validates (quick agent check)
+  2000,   // 2: BizVerify checks
+  2000,   // 3: Directors checks
+  2000,   // 4: SIC validates
+  1500,   // 5: Clean submit!
+  1500,   // 6: Quick review (minimal analyst work)
+  2000,   // 7: Fast approved!
 ]
 
 /* ---------- Main component ---------- */
 export function UserJourneyFlow() {
   const [playing, setPlaying] = useState(true)
   const [speedIdx, setSpeedIdx] = useState(0) // Default Slow
-  const [tick, setTick] = useState(0)
+  const [tradTick, setTradTick] = useState(0)
+  const [agentTick, setAgentTick] = useState(0)
 
+  const speedMult = SPEED_MULTIPLIERS[speedIdx].mult
+
+  // Traditional journey timer - variable duration per step
   useEffect(() => {
     if (!playing) return
-    const interval = setInterval(() => {
-      setTick((t) => t + 1)
-    }, SPEEDS[speedIdx].ms)
-    return () => clearInterval(interval)
-  }, [playing, speedIdx])
+    const duration = TRAD_STEP_DURATIONS[tradTick] * speedMult
+    const timeout = setTimeout(() => {
+      setTradTick((t) => (t + 1) % 10)
+    }, duration)
+    return () => clearTimeout(timeout)
+  }, [playing, tradTick, speedMult])
 
-  // Traditional journey has 10 ticks, Agent journey has 8
-  const tradTick = tick % 10
-  const agentTick = tick % 8
+  // Agent journey timer - variable duration per step (faster overall)
+  useEffect(() => {
+    if (!playing) return
+    const duration = AGENT_STEP_DURATIONS[agentTick] * speedMult
+    const timeout = setTimeout(() => {
+      setAgentTick((t) => (t + 1) % 8)
+    }, duration)
+    return () => clearTimeout(timeout)
+  }, [playing, agentTick, speedMult])
 
   return (
     <main className="min-h-screen bg-background">
@@ -94,7 +131,7 @@ export function UserJourneyFlow() {
             </div>
             <div className="flex items-center gap-2">
               <div className="flex items-center gap-1 rounded-lg border bg-muted/40 p-1">
-                {SPEEDS.map((s, i) => (
+                {SPEED_MULTIPLIERS.map((s, i) => (
                   <button
                     key={s.label}
                     onClick={() => setSpeedIdx(i)}
@@ -123,10 +160,10 @@ export function UserJourneyFlow() {
           {/* Two journeys side by side */}
           <div className="mt-6 grid gap-6 lg:grid-cols-2">
             {/* TRADITIONAL JOURNEY */}
-            <TraditionalJourney tick={tradTick} />
+            <TraditionalJourney tick={tradTick} speedMult={speedMult} />
 
             {/* AGENT-ENHANCED JOURNEY */}
-            <AgentJourney tick={agentTick} />
+            <AgentJourney tick={agentTick} speedMult={speedMult} />
           </div>
 
           {/* Key insight */}
@@ -203,7 +240,10 @@ export function UserJourneyFlow() {
 /* ========================================
    TRADITIONAL JOURNEY - Customer & Analyst Swimlanes
    ======================================== */
-function TraditionalJourney({ tick }: { tick: number }) {
+function TraditionalJourney({ tick, speedMult }: { tick: number; speedMult: number }) {
+  // Calculate estimated time elapsed based on step durations
+  const timeElapsed = TRAD_STEP_DURATIONS.slice(0, tick + 1).reduce((a, b) => a + b, 0) / 1000
+  const isSlowStep = tick === 3 || tick === 6 || tick === 8 // Review, Wait, Re-review
   // Steps: 0-2 customer lane, 3-4 analyst lane, 5 issue, 6 contact (goes back to customer), 
   // 7 customer wait, 8 re-review, 9 approved
   const steps = [
@@ -226,9 +266,16 @@ function TraditionalJourney({ tick }: { tick: number }) {
     <div className="rounded-2xl border-2 overflow-hidden" style={{ borderColor: `${NW.error}44` }}>
       {/* Header */}
       <div className="border-b px-4 py-3" style={{ background: `${NW.error}08`, borderColor: `${NW.error}22` }}>
-        <h2 className="font-bold" style={{ color: NW.error }}>
-          Traditional: Issues Found AFTER Submit
-        </h2>
+        <div className="flex items-center justify-between">
+          <h2 className="font-bold" style={{ color: NW.error }}>
+            Traditional: Issues Found AFTER Submit
+          </h2>
+          {isSlowStep && (
+            <span className="rounded-full px-2 py-0.5 text-[10px] font-bold text-white animate-pulse" style={{ background: NW.warn }}>
+              SLOW STEP
+            </span>
+          )}
+        </div>
         <p className="text-xs text-muted-foreground">
           Customer submits → Analyst finds issues → Contact customer → Wait 2-5 days
         </p>
@@ -397,7 +444,7 @@ function TraditionalJourney({ tick }: { tick: number }) {
 /* ========================================
    AGENT-ENHANCED JOURNEY - Customer & Analyst Swimlanes
    ======================================== */
-function AgentJourney({ tick }: { tick: number }) {
+function AgentJourney({ tick, speedMult }: { tick: number; speedMult: number }) {
   // Steps: Customer fills form with agents validating, then submits clean, analyst approves fast
   const steps = [
     { id: 0, label: "Customer starts", lane: "customer", x: 80 },
@@ -412,14 +459,22 @@ function AgentJourney({ tick }: { tick: number }) {
 
   const currentStep = steps[tick] || steps[0]
   const hasAgent = currentStep.agent !== undefined
+  const isAgentStep = tick >= 1 && tick <= 4
 
   return (
     <div className="rounded-2xl border-2 overflow-hidden" style={{ borderColor: `${NW.ok}44` }}>
       {/* Header */}
       <div className="border-b px-4 py-3" style={{ background: `${NW.ok}08`, borderColor: `${NW.ok}22` }}>
-        <h2 className="font-bold" style={{ color: NW.ok }}>
-          With Agents: Issues Fixed BEFORE Submit
-        </h2>
+        <div className="flex items-center justify-between">
+          <h2 className="font-bold" style={{ color: NW.ok }}>
+            With Agents: Issues Fixed BEFORE Submit
+          </h2>
+          {isAgentStep && (
+            <span className="rounded-full px-2 py-0.5 text-[10px] font-bold text-white" style={{ background: NW.ok }}>
+              FAST CHECK
+            </span>
+          )}
+        </div>
         <p className="text-xs text-muted-foreground">
           Agents validate during form fill → Customer fixes issues immediately → Clean application submitted
         </p>
