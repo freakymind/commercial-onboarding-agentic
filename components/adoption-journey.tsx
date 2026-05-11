@@ -118,9 +118,16 @@ const STAGES = [
 ]
 
 /* ---------- Main Component ---------- */
+const SPEEDS = [
+  { label: "Slow", ms: 8000 },
+  { label: "Normal", ms: 4500 },
+  { label: "Fast", ms: 2000 },
+]
+
 export function AdoptionJourney() {
   const [phase, setPhase] = useState<PhaseId>("human")
   const [playing, setPlaying] = useState(true)
+  const [speedIdx, setSpeedIdx] = useState(1) // default Normal
 
   // Auto-advance phases for demo
   useEffect(() => {
@@ -130,9 +137,9 @@ export function AdoptionJourney() {
         const idx = PHASES.findIndex((ph) => ph.id === p)
         return PHASES[(idx + 1) % PHASES.length].id
       })
-    }, 4500)
+    }, SPEEDS[speedIdx].ms)
     return () => clearInterval(interval)
-  }, [playing])
+  }, [playing, speedIdx])
 
   const phaseIdx = PHASES.findIndex((p) => p.id === phase)
 
@@ -162,15 +169,34 @@ export function AdoptionJourney() {
                 </p>
               </div>
             </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setPlaying((p) => !p)}
-              className="gap-1.5"
-            >
-              {playing ? <Pause className="size-3.5" /> : <Play className="size-3.5" />}
-              {playing ? "Pause" : "Play"}
-            </Button>
+            <div className="flex items-center gap-2">
+              {/* Speed selector */}
+              <div className="flex items-center gap-1 rounded-lg border bg-muted/40 p-1">
+                {SPEEDS.map((s, i) => (
+                  <button
+                    key={s.label}
+                    onClick={() => setSpeedIdx(i)}
+                    className={`rounded-md px-2.5 py-1 text-[11px] font-semibold transition ${
+                      speedIdx === i
+                        ? "bg-background text-foreground shadow-sm"
+                        : "text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    {s.label}
+                  </button>
+                ))}
+              </div>
+              {/* Play/Pause */}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setPlaying((p) => !p)}
+                className="gap-1.5"
+              >
+                {playing ? <Pause className="size-3.5" /> : <Play className="size-3.5" />}
+                {playing ? "Pause" : "Play"}
+              </Button>
+            </div>
           </header>
 
           {/* Phase selector pills */}
