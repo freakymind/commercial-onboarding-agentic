@@ -305,11 +305,13 @@ export function SimpleFlow() {
               onRestart={() => setActiveIdx(0)}
             />
 
-            {/* Timeline */}
-            <section
-              ref={sectionRef}
-              className="relative mt-4 overflow-hidden rounded-2xl border-2 border-[#5a287d]/20 bg-card p-3 shadow-sm sm:p-5"
-            >
+            {/* Side-by-side: Timeline on left, Now Playing on right */}
+            <div className="mt-4 grid gap-4 lg:grid-cols-[1fr_340px]">
+              {/* Timeline */}
+              <section
+                ref={sectionRef}
+                className="relative overflow-hidden rounded-2xl border-2 border-[#5a287d]/20 bg-card p-3 shadow-sm sm:p-5"
+              >
           {/* Column headers */}
           <div
             className="grid items-end gap-x-4"
@@ -381,12 +383,15 @@ export function SimpleFlow() {
               />
             </div>
           )}
-            </section>
+              </section>
 
-            {/* Active stage detail */}
-            <ActiveDetail row={activeRow} escalated={escalated} />
+              {/* Active stage detail — sticky sidebar on desktop */}
+              <aside className="lg:sticky lg:top-4 lg:self-start">
+                <ActiveDetail row={activeRow} escalated={escalated} />
+              </aside>
+            </div>
 
-            {/* Legend */}
+            {/* Legend — full width below */}
             <Legend />
           </TabsContent>
         </Tabs>
@@ -965,7 +970,8 @@ function ActiveDetail({
   escalated: boolean
 }) {
   return (
-    <section className="mt-6 grid gap-3 rounded-2xl border bg-card p-4 shadow-xs sm:p-5 lg:grid-cols-[2fr_1fr]">
+    <section className="space-y-3 rounded-2xl border bg-card p-4 shadow-xs">
+      {/* Header */}
       <div>
         <div
           className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest"
@@ -974,38 +980,42 @@ function ActiveDetail({
           <Sparkles className="size-3.5" />
           Now playing
         </div>
-        <h2 className="mt-1 text-pretty text-xl font-bold sm:text-2xl">
+        <h2 className="mt-1 text-pretty text-lg font-bold leading-tight">
           {row.kind === "stage"
             ? `Stage ${row.number} — ${row.name}`
             : row.name}
         </h2>
-        <p className="mt-1 text-sm text-muted-foreground">{row.sub}</p>
-
-        {row.agents.length > 0 && (
-          <div className="mt-3">
-            <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-              Agents on this stage
-            </div>
-            <div className="mt-1.5 flex flex-wrap gap-1.5">
-              {row.agents.map((a) => (
-                <span
-                  key={a.name}
-                  className="inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] font-medium"
-                  style={{
-                    borderColor: `${NW.primary}55`,
-                    color: NW.primary,
-                    background: `${NW.primary}08`,
-                  }}
-                >
-                  <Cpu className="size-3" />
-                  {a.name}
-                </span>
-              ))}
-            </div>
-          </div>
-        )}
+        <p className="mt-1 text-[13px] leading-snug text-muted-foreground">
+          {row.sub}
+        </p>
       </div>
 
+      {/* Agents list */}
+      {row.agents.length > 0 && (
+        <div>
+          <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+            Agents on this stage
+          </div>
+          <div className="mt-1.5 flex flex-wrap gap-1.5">
+            {row.agents.map((a) => (
+              <span
+                key={a.name}
+                className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-medium"
+                style={{
+                  borderColor: `${NW.primary}55`,
+                  color: NW.primary,
+                  background: `${NW.primary}08`,
+                }}
+              >
+                <Cpu className="size-2.5" />
+                {a.name}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Escalation or fully agentic */}
       <div
         className="rounded-xl border-2 border-dashed p-3"
         style={{
@@ -1020,7 +1030,7 @@ function ActiveDetail({
               style={{ color: NW.exception }}
             >
               <AlertTriangle className="size-3.5" />
-              Human escalation path
+              Human escalation
             </div>
             <div
               className="mt-1 text-sm font-semibold"
@@ -1028,14 +1038,12 @@ function ActiveDetail({
             >
               {row.human.role}
             </div>
-            <p className="mt-0.5 text-[12px] leading-snug text-muted-foreground">
-              <span className="font-medium text-foreground">
-                Triggered when:
-              </span>{" "}
+            <p className="mt-0.5 text-[11px] leading-snug text-muted-foreground">
+              <span className="font-medium text-foreground">When:</span>{" "}
               {row.human.trigger}.
             </p>
             <p
-              className="mt-1 text-[11px] font-semibold tabular-nums"
+              className="mt-1 text-[10px] font-semibold tabular-nums"
               style={{ color: NW.exception }}
             >
               {row.human.rate} {escalated && "· escalating now"}
@@ -1050,9 +1058,8 @@ function ActiveDetail({
               <CheckCircle2 className="size-3.5" />
               Fully agentic
             </div>
-            <p className="mt-1 text-[12px] leading-snug text-muted-foreground">
-              No human in the loop on this stage. Agents complete the work
-              end-to-end and hand off automatically to the next stage.
+            <p className="mt-1 text-[11px] leading-snug text-muted-foreground">
+              No human in the loop. Agents complete end-to-end.
             </p>
           </>
         )}
