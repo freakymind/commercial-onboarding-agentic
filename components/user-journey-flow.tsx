@@ -42,35 +42,35 @@ const PILOT_AGENTS = [
 
 /* ---------- Traditional journey steps (with waiting) ---------- */
 const TRADITIONAL_STEPS = [
-  { id: "t1", label: "Customer Submits", overlay: "Customer completes and submits application", type: "customer" },
+  { id: "t1", label: "Customer Submits", overlay: "Customer completes and submits application — NO validation during fill", type: "customer" },
   { id: "t2", label: "Application Queued", overlay: "Application enters analyst queue — may wait hours or days", type: "queue" },
   { id: "t3", label: "Analyst Reviews", overlay: "Analyst manually checks SOF, business details, directors, SIC codes", type: "analyst" },
-  { id: "t4", label: "Issue Found!", overlay: "Missing SOF documentation, director mismatch, invalid SIC code", type: "error" },
+  { id: "t4", label: "ISSUE FOUND!", overlay: "Missing SOF documentation, director mismatch, invalid SIC code — too late to fix instantly", type: "error" },
   { id: "t5", label: "Contact Customer", overlay: "Analyst emails/calls customer requesting missing information", type: "contact" },
-  { id: "t6", label: "WAITING...", overlay: "Customer may take 2-5 days to respond — analyst moves to other cases", type: "wait" },
-  { id: "t7", label: "Customer Responds", overlay: "Customer finally provides the requested information", type: "respond" },
+  { id: "t6", label: "⏳ WAITING 2-5 DAYS", overlay: "THE BIG PROBLEM: Customer may take 2-5 days to respond — analyst moves to other cases, case sits idle", type: "wait" },
+  { id: "t7", label: "Customer Responds", overlay: "Customer finally provides the requested information — days later", type: "respond" },
   { id: "t8", label: "Re-Review", overlay: "Analyst must re-review the updated application from scratch", type: "analyst" },
-  { id: "t9", label: "Approved", overlay: "Finally approved after 5-7 days total cycle time", type: "complete" },
+  { id: "t9", label: "Finally Approved", overlay: "Approved after 5-7 days total — most time was WAITING", type: "complete" },
 ]
 
-/* ---------- Agent-enhanced journey steps (real-time) ---------- */
+/* ---------- Agent-enhanced journey steps (real-time BEFORE submit) ---------- */
 const AGENT_STEPS = [
-  { id: "a1", label: "Customer Starts", overlay: "Customer begins filling the onboarding form", type: "customer" },
-  { id: "a2", label: "SOF Agent Checks", overlay: "Real-time: Agent validates Source of Funds as customer types", type: "agent", agentIdx: 0 },
-  { id: "a3", label: "Issue? Prompt Now!", overlay: "Missing info? Agent immediately prompts customer to fix it", type: "prompt" },
-  { id: "a4", label: "BizVerify Checks", overlay: "Real-time: Agent verifies company against Companies House", type: "agent", agentIdx: 1 },
-  { id: "a5", label: "Directors Checks", overlay: "Real-time: Agent cross-checks director details against registry", type: "agent", agentIdx: 2 },
-  { id: "a6", label: "SIC Agent Checks", overlay: "Real-time: Agent confirms SIC codes match declared activity", type: "agent", agentIdx: 3 },
-  { id: "a7", label: "Clean Submit", overlay: "All validated! Complete, high-quality application submitted", type: "success" },
-  { id: "a8", label: "Analyst Reviews", overlay: "Analyst receives pre-validated application — minimal effort", type: "analyst" },
-  { id: "a9", label: "Fast Approved!", overlay: "Approved in hours, not days — no back-and-forth needed", type: "complete" },
+  { id: "a1", label: "Customer Starts Form", overlay: "Customer begins filling onboarding form — AGENTS ACTIVE", type: "customer" },
+  { id: "a2", label: "SOF Agent Validates", overlay: "BEFORE SUBMIT: Agent validates Source of Funds as customer types", type: "agent", agentIdx: 0 },
+  { id: "a3", label: "Issue? Fix Now!", overlay: "Missing info? Agent prompts customer IMMEDIATELY — no waiting later", type: "prompt" },
+  { id: "a4", label: "BizVerify Validates", overlay: "BEFORE SUBMIT: Agent verifies company against Companies House in real-time", type: "agent", agentIdx: 1 },
+  { id: "a5", label: "Directors Validates", overlay: "BEFORE SUBMIT: Agent cross-checks director details against registry", type: "agent", agentIdx: 2 },
+  { id: "a6", label: "SIC Agent Validates", overlay: "BEFORE SUBMIT: Agent confirms SIC codes match declared activity", type: "agent", agentIdx: 3 },
+  { id: "a7", label: "Clean Application!", overlay: "All validated BEFORE submit! Complete, high-quality application ready", type: "success" },
+  { id: "a8", label: "Analyst Reviews", overlay: "Analyst receives PRE-VALIDATED application — no issues to chase", type: "analyst" },
+  { id: "a9", label: "Fast Approved!", overlay: "Approved in HOURS not days — NO customer wait time needed", type: "complete" },
 ]
 
-/* ---------- Speed options ---------- */
+/* ---------- Speed options (slower for better understanding) ---------- */
 const SPEEDS = [
-  { label: "Slow", ms: 3000 },
-  { label: "Normal", ms: 1800 },
-  { label: "Fast", ms: 900 },
+  { label: "Slow", ms: 4000 },
+  { label: "Normal", ms: 2500 },
+  { label: "Fast", ms: 1200 },
 ]
 
 /* ---------- Main component ---------- */
@@ -150,8 +150,8 @@ export function UserJourneyFlow() {
           <div className="mt-6 grid gap-4 lg:grid-cols-2">
             {/* Traditional Journey */}
             <JourneyPanel
-              title="Traditional: Analyst Finds Issues Later"
-              subtitle="Submit → Review → Issue → Wait → Re-review"
+              title="Traditional: Issues Found AFTER Submit"
+              subtitle="Submit → Queue → Review → Issue → WAIT 2-5 DAYS → Re-review"
               steps={TRADITIONAL_STEPS}
               currentIdx={tradStep}
               currentStep={tradCurrent}
@@ -163,8 +163,8 @@ export function UserJourneyFlow() {
 
             {/* Agent-Enhanced Journey */}
             <JourneyPanel
-              title="Agent-Enhanced: Fix Issues Now"
-              subtitle="Fill → Validate → Prompt → Submit Clean"
+              title="With Agents: Issues Fixed BEFORE Submit"
+              subtitle="Fill → Agent Validates → Prompt Now → Submit Clean → Fast Approve"
               steps={AGENT_STEPS}
               currentIdx={agentStep}
               currentStep={agentCurrent}
@@ -178,10 +178,31 @@ export function UserJourneyFlow() {
           {/* Key insight callout */}
           <div
             className="mt-6 rounded-xl border-2 p-4"
-            style={{ borderColor: `${NW.ok}44`, background: `${NW.ok}08` }}
+            style={{ borderColor: `${NW.warn}66`, background: `${NW.warn}08` }}
           >
-            <div className="flex flex-col gap-4 lg:flex-row lg:items-center">
-              <div className="flex items-center gap-3">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-start">
+              <div className="flex items-start gap-3 flex-1">
+                <div
+                  className="flex size-12 shrink-0 items-center justify-center rounded-full text-white"
+                  style={{ background: NW.warn }}
+                >
+                  <Clock className="size-6" />
+                </div>
+                <div>
+                  <h3 className="font-bold" style={{ color: NW.warn }}>
+                    The Biggest Problem: Customer Wait Time
+                  </h3>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    In traditional onboarding, analysts find issues <strong>AFTER</strong> submission.
+                    They contact the customer and <strong>WAIT 2-5 DAYS</strong> for a response.
+                    This wait time is the biggest delay in the entire process.
+                  </p>
+                  <p className="mt-2 text-sm font-medium" style={{ color: NW.error }}>
+                    Even if agents help analysts later, the wait problem remains unsolved.
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3 flex-1">
                 <div
                   className="flex size-12 shrink-0 items-center justify-center rounded-full text-white"
                   style={{ background: NW.ok }}
@@ -190,23 +211,17 @@ export function UserJourneyFlow() {
                 </div>
                 <div>
                   <h3 className="font-bold" style={{ color: NW.ok }}>
-                    The Core Problem Solved
+                    The Solution: Agents in Customer Journey
                   </h3>
-                  <p className="text-sm text-muted-foreground">
-                    In traditional flow, analysts discover issues <strong>after</strong> submission.
-                    Customer contact and wait time (2-5 days) is the biggest delay.
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    Agents validate <strong>DURING</strong> the customer session, <strong>BEFORE</strong> submit.
+                    Issues are caught and fixed <strong>IMMEDIATELY</strong> while customer is still engaged.
+                    No waiting. No back-and-forth. Clean applications from day one.
+                  </p>
+                  <p className="mt-2 text-sm font-bold" style={{ color: NW.ok }}>
+                    Result: Higher RFT, Higher STP, 90%+ faster onboarding
                   </p>
                 </div>
-              </div>
-              <div className="flex-1 lg:text-right">
-                <p className="text-sm font-medium text-muted-foreground">
-                  Agents validate <strong>during</strong> the customer session.
-                  Issues are fixed <strong>before</strong> submission.
-                  Analysts receive clean, high-quality applications.
-                </p>
-                <p className="mt-1 text-lg font-bold" style={{ color: NW.ok }}>
-                  Result: Higher RFT, Higher STP, Faster Onboarding
-                </p>
               </div>
             </div>
           </div>
