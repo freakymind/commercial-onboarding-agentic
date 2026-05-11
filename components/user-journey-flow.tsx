@@ -314,13 +314,13 @@ function TraditionalJourney({ tick }: { tick: number }) {
             </g>
           )}
 
-          {/* LONG WAIT ZONE */}
+          {/* LONG WAIT ZONE - Flow HALTS here */}
           {tick >= 6 && tick <= 7 && (
             <g>
-              <rect x="580" y="20" width="180" height="55" rx="8" fill={`${NW.warn}20`} stroke={NW.warn} strokeWidth="2" strokeDasharray="4 2" />
-              <text x="670" y="38" textAnchor="middle" fontSize="10" fontWeight="bold" fill={NW.warn}>WAITING FOR CUSTOMER</text>
-              <text x="670" y="52" textAnchor="middle" fontSize="14" fontWeight="bold" fill={NW.error} className="animate-pulse">2-5 DAYS</text>
-              <text x="670" y="68" textAnchor="middle" fontSize="8" fill={NW.wait}>Case sits idle...</text>
+              <rect x="580" y="18" width="180" height="60" rx="8" fill={`${NW.warn}25`} stroke={NW.warn} strokeWidth="3" />
+              <text x="670" y="36" textAnchor="middle" fontSize="9" fontWeight="bold" fill={NW.warn}>FLOW HALTED</text>
+              <text x="670" y="52" textAnchor="middle" fontSize="16" fontWeight="bold" fill={NW.error}>2-5 DAYS WAIT</text>
+              <text x="670" y="70" textAnchor="middle" fontSize="8" fill={NW.wait}>Case sits idle while analyst waits...</text>
             </g>
           )}
 
@@ -338,15 +338,16 @@ function TraditionalJourney({ tick }: { tick: number }) {
             const isActive = i === tick
             const isPast = i < tick
             const color = step.isWait ? NW.warn : step.isError ? NW.error : step.isComplete ? NW.ok : step.lane === "customer" ? NW.customer : NW.analyst
-            const r = isActive ? 18 : 13
+            const r = isActive ? 16 : 12
 
             return (
               <g key={step.id}>
+                {/* Highlight ring for active step - no ping */}
                 {isActive && (
-                  <circle cx={step.x} cy={y} r={r + 10} fill="none" stroke={color} strokeWidth="2" opacity="0.5" className="animate-ping" />
+                  <circle cx={step.x} cy={y} r={r + 6} fill="none" stroke={color} strokeWidth="3" opacity="0.6" />
                 )}
-                <circle cx={step.x} cy={y} r={r} fill={isPast || isActive ? color : `${color}40`} stroke={color} strokeWidth={isActive ? 3 : 2} />
-                <text x={step.x} y={y + 4} textAnchor="middle" fontSize={isActive ? 12 : 10} fontWeight="bold" fill="white">
+                <circle cx={step.x} cy={y} r={r} fill={isPast || isActive ? color : `${color}30`} stroke={color} strokeWidth={isActive ? 3 : 1.5} />
+                <text x={step.x} y={y + 4} textAnchor="middle" fontSize={isActive ? 11 : 9} fontWeight="bold" fill="white">
                   {i + 1}
                 </text>
                 {/* Label below */}
@@ -363,6 +364,18 @@ function TraditionalJourney({ tick }: { tick: number }) {
               </g>
             )
           })}
+
+          {/* Moving data flow dot along path */}
+          {tick < 9 && (
+            <circle r="6" fill={tick === 6 ? NW.warn : NW.error}>
+              <animateMotion
+                dur={tick === 6 ? "6s" : "2s"}
+                repeatCount="indefinite"
+                path="M50 50 L150 50 L200 145 L350 145 L450 145 L550 145 L600 50 L750 50 L800 145 L950 145"
+                begin={`${tick * 0.1}s`}
+              />
+            </circle>
+          )}
         </svg>
       </div>
 
@@ -506,13 +519,13 @@ function AgentJourney({ tick }: { tick: number }) {
           {hasAgent && tick >= 1 && tick <= 4 && (
             <g className="animate-draw-in">
               {/* Small bidirectional arrows showing instant validation */}
-              <circle cx={currentStep.x} cy="90" r="12" fill={PILOT_AGENTS[currentStep.agent!].color} className="animate-pulse" />
-              <text x={currentStep.x} y="94" textAnchor="middle" fontSize="8" fontWeight="bold" fill="white">OK</text>
+              <circle cx={currentStep.x} cy="90" r="10" fill={PILOT_AGENTS[currentStep.agent!].color} />
+              <text x={currentStep.x} y="93" textAnchor="middle" fontSize="7" fontWeight="bold" fill="white">OK</text>
               {/* Arrow up from agent to customer */}
-              <path d={`M${currentStep.x - 15} 85 L${currentStep.x - 15} 60`} fill="none" stroke={NW.agent} strokeWidth="2" markerEnd="url(#arrowAgent)" />
+              <path d={`M${currentStep.x - 12} 85 L${currentStep.x - 12} 58`} fill="none" stroke={NW.agent} strokeWidth="2" markerEnd="url(#arrowAgent)" />
               {/* Arrow down from customer to agent */}
-              <path d={`M${currentStep.x + 15} 60 L${currentStep.x + 15} 85`} fill="none" stroke={NW.customer} strokeWidth="2" markerEnd="url(#arrowCustomer)" />
-              <text x={currentStep.x} y="105" textAnchor="middle" fontSize="7" fontWeight="bold" fill={NW.agent}>INSTANT</text>
+              <path d={`M${currentStep.x + 12} 58 L${currentStep.x + 12} 85`} fill="none" stroke={NW.customer} strokeWidth="2" markerEnd="url(#arrowCustomer)" />
+              <text x={currentStep.x} y="103" textAnchor="middle" fontSize="6" fontWeight="bold" fill={NW.agent}>INSTANT</text>
             </g>
           )}
 
@@ -522,27 +535,19 @@ function AgentJourney({ tick }: { tick: number }) {
             const isActive = i === tick
             const isPast = i < tick
             const color = step.agent !== undefined ? PILOT_AGENTS[step.agent].color : step.isSuccess || step.isComplete ? NW.ok : step.lane === "customer" ? NW.customer : NW.analyst
-            const r = isActive ? 16 : 12
+            const r = isActive ? 14 : 11
 
             return (
               <g key={step.id}>
+                {/* Highlight ring - no ping */}
                 {isActive && (
-                  <circle cx={step.x} cy={y} r={r + 8} fill="none" stroke={color} strokeWidth="2" opacity="0.4" className="animate-ping" />
+                  <circle cx={step.x} cy={y} r={r + 5} fill="none" stroke={color} strokeWidth="3" opacity="0.6" />
                 )}
-                <circle cx={step.x} cy={y} r={r} fill={isPast || isActive ? color : `${color}33`} stroke={color} strokeWidth={isActive ? 3 : 1} />
-                {step.agent !== undefined ? (
-                  <Bot x={step.x - 6} y={y - 6} className="size-3" style={{ color: "white" }} />
-                ) : (
-                  <text x={step.x} y={y + 4} textAnchor="middle" fontSize={isActive ? 11 : 9} fontWeight="bold" fill="white">
-                    {i + 1}
-                  </text>
-                )}
-                {/* Agent icon in circle */}
-                {step.agent !== undefined && (
-                  <text x={step.x} y={y + 4} textAnchor="middle" fontSize="8" fontWeight="bold" fill="white">
-                    {PILOT_AGENTS[step.agent].short.charAt(0)}
-                  </text>
-                )}
+                <circle cx={step.x} cy={y} r={r} fill={isPast || isActive ? color : `${color}30`} stroke={color} strokeWidth={isActive ? 3 : 1.5} />
+                {/* Agent short letter or step number */}
+                <text x={step.x} y={y + 4} textAnchor="middle" fontSize={isActive ? 10 : 8} fontWeight="bold" fill="white">
+                  {step.agent !== undefined ? PILOT_AGENTS[step.agent].short.charAt(0) : i + 1}
+                </text>
                 {/* Label */}
                 <text
                   x={step.x}
@@ -557,6 +562,17 @@ function AgentJourney({ tick }: { tick: number }) {
               </g>
             )
           })}
+
+          {/* Moving data flow dot */}
+          {tick < 7 && (
+            <circle r="5" fill={NW.ok}>
+              <animateMotion
+                dur="1.5s"
+                repeatCount="indefinite"
+                path="M80 50 L680 50 L740 145 L920 145"
+              />
+            </circle>
+          )}
 
           {/* No wait indicator - straight through! */}
           <g>
