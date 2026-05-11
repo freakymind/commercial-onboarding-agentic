@@ -22,6 +22,7 @@ import {
   UserCheck,
   UserCircle2,
   Users,
+  Zap,
 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -295,6 +296,17 @@ export function SimpleFlow() {
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
+            <Link href="/capture">
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-1.5"
+                style={{ borderColor: `${NW.accent}44`, color: NW.accent }}
+              >
+                <Zap className="size-3.5" />
+                User Journey Agents
+              </Button>
+            </Link>
             <Link href="/adoption">
               <Button
                 variant="outline"
@@ -303,7 +315,7 @@ export function SimpleFlow() {
                 style={{ borderColor: `${NW.primary}44`, color: NW.primary }}
               >
                 <Layers className="size-3.5" />
-                Agent Adoption Roadmap
+                Adoption Roadmap
               </Button>
             </Link>
             <ProgressBadge
