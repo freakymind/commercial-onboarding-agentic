@@ -5,20 +5,14 @@ import Link from "next/link"
 import {
   AlertTriangle,
   ArrowLeft,
-  ArrowRight,
   Bot,
   Check,
   CheckCircle2,
-  ChevronRight,
   Clock,
   FileSearch,
   MessageSquare,
   Pause,
   Play,
-  RefreshCw,
-  ShieldCheck,
-  Sparkles,
-  TrendingUp,
   User,
   UserCheck,
   Zap,
@@ -38,141 +32,66 @@ const NW = {
   bg: "#faf8fc",
 }
 
-/* ---------- Pilot agents for user journey ---------- */
+/* ---------- Pilot agents ---------- */
 const PILOT_AGENTS = [
-  {
-    id: "sof",
-    name: "SOF Capture Agent",
-    short: "SOF",
-    color: "#7b2d8e",
-    check: "Source of Funds",
-  },
-  {
-    id: "biz",
-    name: "Business Verification Agent",
-    short: "BizVerify",
-    color: "#bd0f72",
-    check: "Company Details",
-  },
-  {
-    id: "director",
-    name: "Director Check Agent",
-    short: "Directors",
-    color: "#5a287d",
-    check: "Director Info",
-  },
-  {
-    id: "sic",
-    name: "SIC Review Agent",
-    short: "SIC",
-    color: "#1a8754",
-    check: "Industry Code",
-  },
+  { id: "sof", name: "SOF Capture Agent", short: "SOF", color: "#7b2d8e" },
+  { id: "biz", name: "Business Verification Agent", short: "BizVerify", color: "#bd0f72" },
+  { id: "director", name: "Director Check Agent", short: "Directors", color: "#5a287d" },
+  { id: "sic", name: "SIC Review Agent", short: "SIC", color: "#1a8754" },
 ]
 
-/* ---------- Journey steps with overlay annotations ---------- */
-const JOURNEY_STEPS = [
-  {
-    id: "start",
-    label: "Customer Starts Application",
-    overlay: "Customer begins filling the onboarding form",
-    type: "customer",
-    x: 60,
-    y: 200,
-  },
-  {
-    id: "sof-check",
-    label: "SOF Agent Validates",
-    overlay: "Agent checks Source of Funds declaration in real-time",
-    type: "agent",
-    agentIdx: 0,
-    x: 180,
-    y: 120,
-  },
-  {
-    id: "sof-prompt",
-    label: "Prompts for Missing Info",
-    overlay: "Issue found → Agent immediately asks customer to clarify",
-    type: "prompt",
-    x: 180,
-    y: 280,
-  },
-  {
-    id: "biz-check",
-    label: "BizVerify Agent Validates",
-    overlay: "Agent verifies company against Companies House live",
-    type: "agent",
-    agentIdx: 1,
-    x: 320,
-    y: 120,
-  },
-  {
-    id: "director-check",
-    label: "Director Agent Validates",
-    overlay: "Agent cross-checks director details against registry",
-    type: "agent",
-    agentIdx: 2,
-    x: 460,
-    y: 120,
-  },
-  {
-    id: "sic-check",
-    label: "SIC Agent Validates",
-    overlay: "Agent confirms SIC codes match declared activity",
-    type: "agent",
-    agentIdx: 3,
-    x: 600,
-    y: 120,
-  },
-  {
-    id: "clean-submit",
-    label: "Clean Application Submitted",
-    overlay: "All checks passed → Complete, validated application ready",
-    type: "success",
-    x: 720,
-    y: 200,
-  },
-  {
-    id: "analyst",
-    label: "Analyst Reviews",
-    overlay: "Analyst receives high-quality application — minimal rework",
-    type: "analyst",
-    x: 860,
-    y: 200,
-  },
-  {
-    id: "approved",
-    label: "Approved",
-    overlay: "Fast approval — no back-and-forth delays",
-    type: "complete",
-    x: 980,
-    y: 200,
-  },
+/* ---------- Traditional journey steps (with waiting) ---------- */
+const TRADITIONAL_STEPS = [
+  { id: "t1", label: "Customer Submits", overlay: "Customer completes and submits application", type: "customer" },
+  { id: "t2", label: "Application Queued", overlay: "Application enters analyst queue — may wait hours or days", type: "queue" },
+  { id: "t3", label: "Analyst Reviews", overlay: "Analyst manually checks SOF, business details, directors, SIC codes", type: "analyst" },
+  { id: "t4", label: "Issue Found!", overlay: "Missing SOF documentation, director mismatch, invalid SIC code", type: "error" },
+  { id: "t5", label: "Contact Customer", overlay: "Analyst emails/calls customer requesting missing information", type: "contact" },
+  { id: "t6", label: "WAITING...", overlay: "Customer may take 2-5 days to respond — analyst moves to other cases", type: "wait" },
+  { id: "t7", label: "Customer Responds", overlay: "Customer finally provides the requested information", type: "respond" },
+  { id: "t8", label: "Re-Review", overlay: "Analyst must re-review the updated application from scratch", type: "analyst" },
+  { id: "t9", label: "Approved", overlay: "Finally approved after 5-7 days total cycle time", type: "complete" },
 ]
 
-/* ---------- Speed options (slower defaults) ---------- */
+/* ---------- Agent-enhanced journey steps (real-time) ---------- */
+const AGENT_STEPS = [
+  { id: "a1", label: "Customer Starts", overlay: "Customer begins filling the onboarding form", type: "customer" },
+  { id: "a2", label: "SOF Agent Checks", overlay: "Real-time: Agent validates Source of Funds as customer types", type: "agent", agentIdx: 0 },
+  { id: "a3", label: "Issue? Prompt Now!", overlay: "Missing info? Agent immediately prompts customer to fix it", type: "prompt" },
+  { id: "a4", label: "BizVerify Checks", overlay: "Real-time: Agent verifies company against Companies House", type: "agent", agentIdx: 1 },
+  { id: "a5", label: "Directors Checks", overlay: "Real-time: Agent cross-checks director details against registry", type: "agent", agentIdx: 2 },
+  { id: "a6", label: "SIC Agent Checks", overlay: "Real-time: Agent confirms SIC codes match declared activity", type: "agent", agentIdx: 3 },
+  { id: "a7", label: "Clean Submit", overlay: "All validated! Complete, high-quality application submitted", type: "success" },
+  { id: "a8", label: "Analyst Reviews", overlay: "Analyst receives pre-validated application — minimal effort", type: "analyst" },
+  { id: "a9", label: "Fast Approved!", overlay: "Approved in hours, not days — no back-and-forth needed", type: "complete" },
+]
+
+/* ---------- Speed options ---------- */
 const SPEEDS = [
-  { label: "Slow", ms: 4000 },
-  { label: "Normal", ms: 2500 },
-  { label: "Fast", ms: 1200 },
+  { label: "Slow", ms: 3000 },
+  { label: "Normal", ms: 1800 },
+  { label: "Fast", ms: 900 },
 ]
 
 /* ---------- Main component ---------- */
 export function UserJourneyFlow() {
   const [playing, setPlaying] = useState(true)
-  const [speedIdx, setSpeedIdx] = useState(0) // Default to Slow
-  const [activeStep, setActiveStep] = useState(0)
+  const [speedIdx, setSpeedIdx] = useState(0) // Default Slow
+  const [tradStep, setTradStep] = useState(0)
+  const [agentStep, setAgentStep] = useState(0)
 
-  // Animation tick through steps
+  // Sync both journeys
   useEffect(() => {
     if (!playing) return
     const interval = setInterval(() => {
-      setActiveStep((s) => (s + 1) % JOURNEY_STEPS.length)
+      setTradStep((s) => (s + 1) % TRADITIONAL_STEPS.length)
+      setAgentStep((s) => (s + 1) % AGENT_STEPS.length)
     }, SPEEDS[speedIdx].ms)
     return () => clearInterval(interval)
   }, [playing, speedIdx])
 
-  const currentStep = JOURNEY_STEPS[activeStep]
+  const tradCurrent = TRADITIONAL_STEPS[tradStep]
+  const agentCurrent = AGENT_STEPS[agentStep]
 
   return (
     <main className="min-h-screen bg-background">
@@ -182,26 +101,24 @@ export function UserJourneyFlow() {
           <header className="flex flex-wrap items-center justify-between gap-4">
             <div>
               <Link
-                href="/"
+                href="/flow"
                 className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
               >
                 <ArrowLeft className="size-3" />
-                Back to Journey
+                Back to Flow
               </Link>
               <h1
                 className="mt-1 text-2xl font-bold tracking-tight sm:text-3xl"
                 style={{ color: NW.primary }}
               >
-                Agents in the User Journey
+                Why Agents in the User Journey?
               </h1>
               <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
-                Agents validate data as customers fill the form — catching issues
-                immediately and prompting for corrections in the same session.
-                No wait. No rework. Better quality for analysts.
+                Compare traditional analyst-driven onboarding vs agent-enhanced capture.
+                See how real-time validation eliminates the costly wait-loop.
               </p>
             </div>
             <div className="flex items-center gap-2">
-              {/* Speed selector */}
               <div className="flex items-center gap-1 rounded-lg border bg-muted/40 p-1">
                 {SPEEDS.map((s, i) => (
                   <button
@@ -223,619 +140,380 @@ export function UserJourneyFlow() {
                 onClick={() => setPlaying((p) => !p)}
                 className="gap-1.5"
               >
-                {playing ? (
-                  <Pause className="size-3.5" />
-                ) : (
-                  <Play className="size-3.5" />
-                )}
+                {playing ? <Pause className="size-3.5" /> : <Play className="size-3.5" />}
                 {playing ? "Pause" : "Play"}
               </Button>
             </div>
           </header>
 
-          {/* Overlay annotation panel */}
+          {/* Side-by-side comparison */}
+          <div className="mt-6 grid gap-4 lg:grid-cols-2">
+            {/* Traditional Journey */}
+            <JourneyPanel
+              title="Traditional: Analyst Finds Issues Later"
+              subtitle="Submit → Review → Issue → Wait → Re-review"
+              steps={TRADITIONAL_STEPS}
+              currentIdx={tradStep}
+              currentStep={tradCurrent}
+              variant="traditional"
+              cycleTime="5-7 days"
+              rft="~62%"
+              stp="~28%"
+            />
+
+            {/* Agent-Enhanced Journey */}
+            <JourneyPanel
+              title="Agent-Enhanced: Fix Issues Now"
+              subtitle="Fill → Validate → Prompt → Submit Clean"
+              steps={AGENT_STEPS}
+              currentIdx={agentStep}
+              currentStep={agentCurrent}
+              variant="agent"
+              cycleTime="4-8 hours"
+              rft="~94%"
+              stp="~78%"
+            />
+          </div>
+
+          {/* Key insight callout */}
           <div
-            key={currentStep.id}
-            className="animate-draw-in mt-6 rounded-xl border-2 p-4"
-            style={{
-              borderColor:
-                currentStep.type === "agent"
-                  ? `${PILOT_AGENTS[currentStep.agentIdx ?? 0].color}66`
-                  : currentStep.type === "prompt"
-                    ? `${NW.warn}66`
-                    : currentStep.type === "success" ||
-                        currentStep.type === "complete"
-                      ? `${NW.ok}66`
-                      : `${NW.primary}44`,
-              background:
-                currentStep.type === "agent"
-                  ? `${PILOT_AGENTS[currentStep.agentIdx ?? 0].color}08`
-                  : currentStep.type === "prompt"
-                    ? `${NW.warn}08`
-                    : currentStep.type === "success" ||
-                        currentStep.type === "complete"
-                      ? `${NW.ok}08`
-                      : `${NW.primary}05`,
-            }}
+            className="mt-6 rounded-xl border-2 p-4"
+            style={{ borderColor: `${NW.ok}44`, background: `${NW.ok}08` }}
           >
-            <div className="flex items-start gap-4">
-              <div
-                className="flex size-10 shrink-0 items-center justify-center rounded-full text-white"
-                style={{
-                  background:
-                    currentStep.type === "agent"
-                      ? PILOT_AGENTS[currentStep.agentIdx ?? 0].color
-                      : currentStep.type === "prompt"
-                        ? NW.warn
-                        : currentStep.type === "success" ||
-                            currentStep.type === "complete"
-                          ? NW.ok
-                          : currentStep.type === "analyst"
-                            ? NW.human
-                            : NW.primary,
-                }}
-              >
-                {currentStep.type === "agent" ? (
-                  <Bot className="size-5" />
-                ) : currentStep.type === "prompt" ? (
-                  <MessageSquare className="size-5" />
-                ) : currentStep.type === "analyst" ? (
-                  <UserCheck className="size-5" />
-                ) : currentStep.type === "success" ||
-                  currentStep.type === "complete" ? (
-                  <CheckCircle2 className="size-5" />
-                ) : (
-                  <User className="size-5" />
-                )}
-              </div>
-              <div className="flex-1">
-                <div className="flex items-center gap-2">
-                  <span
-                    className="text-xs font-bold uppercase tracking-widest"
-                    style={{
-                      color:
-                        currentStep.type === "agent"
-                          ? PILOT_AGENTS[currentStep.agentIdx ?? 0].color
-                          : currentStep.type === "prompt"
-                            ? NW.warn
-                            : currentStep.type === "success" ||
-                                currentStep.type === "complete"
-                              ? NW.ok
-                              : NW.primary,
-                    }}
-                  >
-                    Step {activeStep + 1} of {JOURNEY_STEPS.length}
-                  </span>
-                  {currentStep.type === "agent" && (
-                    <span
-                      className="rounded-full px-2 py-0.5 text-[10px] font-semibold text-white"
-                      style={{
-                        background:
-                          PILOT_AGENTS[currentStep.agentIdx ?? 0].color,
-                      }}
-                    >
-                      {PILOT_AGENTS[currentStep.agentIdx ?? 0].name}
-                    </span>
-                  )}
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-center">
+              <div className="flex items-center gap-3">
+                <div
+                  className="flex size-12 shrink-0 items-center justify-center rounded-full text-white"
+                  style={{ background: NW.ok }}
+                >
+                  <Zap className="size-6" />
                 </div>
-                <h2 className="mt-1 text-lg font-bold">{currentStep.label}</h2>
-                <p className="mt-0.5 text-sm text-muted-foreground">
-                  {currentStep.overlay}
-                </p>
+                <div>
+                  <h3 className="font-bold" style={{ color: NW.ok }}>
+                    The Core Problem Solved
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    In traditional flow, analysts discover issues <strong>after</strong> submission.
+                    Customer contact and wait time (2-5 days) is the biggest delay.
+                  </p>
+                </div>
               </div>
-              <div className="hidden shrink-0 sm:block">
-                <StepProgress current={activeStep} total={JOURNEY_STEPS.length} />
+              <div className="flex-1 lg:text-right">
+                <p className="text-sm font-medium text-muted-foreground">
+                  Agents validate <strong>during</strong> the customer session.
+                  Issues are fixed <strong>before</strong> submission.
+                  Analysts receive clean, high-quality applications.
+                </p>
+                <p className="mt-1 text-lg font-bold" style={{ color: NW.ok }}>
+                  Result: Higher RFT, Higher STP, Faster Onboarding
+                </p>
               </div>
             </div>
           </div>
 
-          {/* Main flow SVG */}
-          <div className="mt-4 overflow-x-auto rounded-2xl border-2 bg-card p-4 shadow-sm">
-            <svg
-              viewBox="0 0 1050 400"
-              className="min-w-[900px]"
-              style={{ height: 400 }}
-            >
-              {/* Background lanes */}
-              <rect
-                x="0"
-                y="0"
-                width="1050"
-                height="400"
-                fill={`${NW.bg}`}
-                rx="12"
-              />
-
-              {/* Agent lane background */}
-              <rect
-                x="140"
-                y="60"
-                width="520"
-                height="100"
-                rx="8"
-                fill={`${NW.agent}06`}
-                stroke={`${NW.agent}22`}
-                strokeWidth="1"
-              />
-              <text
-                x="400"
-                y="85"
-                textAnchor="middle"
-                fontSize="10"
-                fontWeight="bold"
-                fill={NW.agent}
-                letterSpacing="2"
-              >
-                AGENT VALIDATION LAYER — REAL-TIME CHECKS
-              </text>
-
-              {/* Prompt lane background */}
-              <rect
-                x="140"
-                y="240"
-                width="200"
-                height="80"
-                rx="8"
-                fill={`${NW.warn}06`}
-                stroke={`${NW.warn}22`}
-                strokeWidth="1"
-              />
-              <text
-                x="240"
-                y="265"
-                textAnchor="middle"
-                fontSize="9"
-                fontWeight="bold"
-                fill={NW.warn}
-                letterSpacing="1"
-              >
-                INSTANT CUSTOMER PROMPT
-              </text>
-
-              {/* Main flow path */}
-              <path
-                d="M60 200 
-                   C120 200 140 130 180 130
-                   L600 130
-                   C640 130 660 200 720 200
-                   L980 200"
-                fill="none"
-                stroke={`${NW.ok}33`}
-                strokeWidth="4"
-              />
-              {/* Animated dashed overlay */}
-              <path
-                d="M60 200 
-                   C120 200 140 130 180 130
-                   L600 130
-                   C640 130 660 200 720 200
-                   L980 200"
-                fill="none"
-                stroke={NW.ok}
-                strokeWidth="3"
-                strokeDasharray="10 6"
-                className="animate-flow-dash"
-              />
-
-              {/* Prompt branch path */}
-              <path
-                d="M180 130 L180 290"
-                fill="none"
-                stroke={`${NW.warn}44`}
-                strokeWidth="2"
-                strokeDasharray="4 3"
-              />
-              <path
-                d="M180 290 L180 130"
-                fill="none"
-                stroke={NW.warn}
-                strokeWidth="2"
-                strokeDasharray="4 3"
-                className="animate-flow-dash"
-                style={{ animationDirection: "reverse" }}
-              />
-
-              {/* Step nodes */}
-              {JOURNEY_STEPS.map((step, i) => {
-                const isActive = i === activeStep
-                const isPast = i < activeStep
-
-                let color = NW.primary
-                if (step.type === "agent")
-                  color = PILOT_AGENTS[step.agentIdx ?? 0].color
-                else if (step.type === "prompt") color = NW.warn
-                else if (step.type === "success" || step.type === "complete")
-                  color = NW.ok
-                else if (step.type === "analyst") color = NW.human
-
-                const radius = isActive ? 24 : 18
-
-                return (
-                  <g key={step.id}>
-                    {/* Pulse ring for active */}
-                    {isActive && (
-                      <circle
-                        cx={step.x}
-                        cy={step.y}
-                        r={radius + 8}
-                        fill="none"
-                        stroke={color}
-                        strokeWidth="2"
-                        opacity="0.4"
-                        className="animate-ping"
-                      />
-                    )}
-
-                    {/* Node */}
-                    <circle
-                      cx={step.x}
-                      cy={step.y}
-                      r={radius}
-                      fill={isPast || isActive ? color : `${color}44`}
-                      stroke={color}
-                      strokeWidth={isActive ? 3 : 1}
-                    />
-
-                    {/* Icon */}
-                    {step.type === "agent" ? (
-                      <text
-                        x={step.x}
-                        y={step.y + 4}
-                        textAnchor="middle"
-                        fontSize={isActive ? 10 : 8}
-                        fontWeight="bold"
-                        fill="white"
-                      >
-                        {PILOT_AGENTS[step.agentIdx ?? 0].short.slice(0, 3)}
-                      </text>
-                    ) : (
-                      <text
-                        x={step.x}
-                        y={step.y + 5}
-                        textAnchor="middle"
-                        fontSize={isActive ? 14 : 11}
-                        fontWeight="bold"
-                        fill="white"
-                      >
-                        {step.type === "customer"
-                          ? "👤"
-                          : step.type === "prompt"
-                            ? "💬"
-                            : step.type === "analyst"
-                              ? "🔍"
-                              : step.type === "success"
-                                ? "✓"
-                                : step.type === "complete"
-                                  ? "🎉"
-                                  : "•"}
-                      </text>
-                    )}
-
-                    {/* Label */}
-                    <text
-                      x={step.x}
-                      y={step.y + (step.type === "prompt" ? -35 : 42)}
-                      textAnchor="middle"
-                      fontSize="10"
-                      fontWeight="600"
-                      fill={isPast || isActive ? color : `${color}88`}
-                    >
-                      {step.label.length > 18
-                        ? step.label.slice(0, 16) + "..."
-                        : step.label}
-                    </text>
-
-                    {/* Time saved indicator for agent nodes */}
-                    {step.type === "agent" && (isPast || isActive) && (
-                      <g>
-                        <rect
-                          x={step.x - 25}
-                          y={step.y + 52}
-                          width="50"
-                          height="16"
-                          rx="8"
-                          fill={`${NW.ok}22`}
-                          stroke={NW.ok}
-                          strokeWidth="1"
-                        />
-                        <text
-                          x={step.x}
-                          y={step.y + 63}
-                          textAnchor="middle"
-                          fontSize="8"
-                          fontWeight="bold"
-                          fill={NW.ok}
-                        >
-                          ✓ Checked
-                        </text>
-                      </g>
-                    )}
-                  </g>
-                )
-              })}
-
-              {/* Traveling packet */}
-              <circle r="10" fill={NW.accent}>
-                <animateMotion
-                  dur={`${JOURNEY_STEPS.length * 2.5}s`}
-                  repeatCount="indefinite"
-                  path="M60 200 C120 200 140 130 180 130 L600 130 C640 130 660 200 720 200 L980 200"
-                />
-              </circle>
-              <circle r="6" fill="white" opacity="0.6">
-                <animateMotion
-                  dur={`${JOURNEY_STEPS.length * 2.5}s`}
-                  repeatCount="indefinite"
-                  path="M60 200 C120 200 140 130 180 130 L600 130 C640 130 660 200 720 200 L980 200"
-                />
-              </circle>
-
-              {/* Time comparison callout */}
-              <g>
-                <rect
-                  x="750"
-                  y="60"
-                  width="280"
-                  height="100"
-                  rx="12"
-                  fill="white"
-                  stroke={`${NW.ok}44`}
-                  strokeWidth="2"
-                />
-                <text
-                  x="890"
-                  y="90"
-                  textAnchor="middle"
-                  fontSize="11"
-                  fontWeight="bold"
-                  fill={NW.ok}
-                >
-                  TIME SAVED
-                </text>
-                <text
-                  x="890"
-                  y="115"
-                  textAnchor="middle"
-                  fontSize="22"
-                  fontWeight="bold"
-                  fill={NW.ok}
-                >
-                  2-5 DAYS → MINUTES
-                </text>
-                <text
-                  x="890"
-                  y="140"
-                  textAnchor="middle"
-                  fontSize="9"
-                  fill={NW.primary}
-                >
-                  No wait for customer response
-                </text>
-              </g>
-            </svg>
-          </div>
-
-          {/* Key benefits */}
-          <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <BenefitCard
-              icon={<Zap className="size-5" />}
-              title="Instant Validation"
-              desc="Agents check data as customer types — no delays"
-              color={NW.agent}
-            />
-            <BenefitCard
-              icon={<MessageSquare className="size-5" />}
-              title="Same-Session Fixes"
-              desc="Issues found → customer corrects immediately"
-              color={NW.warn}
-            />
-            <BenefitCard
-              icon={<ShieldCheck className="size-5" />}
-              title="Clean Applications"
-              desc="Analysts receive complete, validated data"
-              color={NW.ok}
-            />
-            <BenefitCard
-              icon={<TrendingUp className="size-5" />}
-              title="Higher RFT & STP"
-              desc="Right First Time jumps from 62% to 94%"
-              color={NW.accent}
-            />
-          </div>
-
-          {/* Metrics comparison */}
-          <MetricsSection />
-
           {/* Pilot agents */}
-          <AgentsSection />
-
-          {/* Bottom CTA */}
-          <section className="mt-8 flex flex-wrap items-center justify-center gap-3">
-            <Link href="/adoption">
-              <Button
-                variant="outline"
-                className="gap-2"
-                style={{ borderColor: `${NW.primary}44`, color: NW.primary }}
-              >
-                <TrendingUp className="size-4" />
-                View Adoption Roadmap
-              </Button>
-            </Link>
-            <Link href="/flow">
-              <Button
-                variant="outline"
-                className="gap-2"
-                style={{ borderColor: `${NW.primary}44`, color: NW.primary }}
-              >
-                <Zap className="size-4" />
-                Watch Onboarding Flow
-              </Button>
-            </Link>
-          </section>
+          <div className="mt-6">
+            <h3 className="text-sm font-bold uppercase tracking-widest text-muted-foreground">
+              Initial Pilot Agents
+            </h3>
+            <div className="mt-2 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              {PILOT_AGENTS.map((agent) => (
+                <div
+                  key={agent.id}
+                  className="rounded-lg border p-3"
+                  style={{ borderColor: `${agent.color}44`, background: `${agent.color}05` }}
+                >
+                  <div className="flex items-center gap-2">
+                    <div
+                      className="flex size-8 items-center justify-center rounded-full text-white"
+                      style={{ background: agent.color }}
+                    >
+                      <Bot className="size-4" />
+                    </div>
+                    <div>
+                      <div className="text-sm font-semibold" style={{ color: agent.color }}>
+                        {agent.name}
+                      </div>
+                      <div className="text-[11px] text-muted-foreground">
+                        Validates in real-time during form fill
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
     </main>
   )
 }
 
-/* ---------- Step progress indicator ---------- */
-function StepProgress({ current, total }: { current: number; total: number }) {
-  return (
-    <div className="flex items-center gap-1">
-      {Array.from({ length: total }).map((_, i) => (
-        <div
-          key={i}
-          className={`h-2 rounded-full transition-all ${
-            i === current ? "w-6" : "w-2"
-          }`}
-          style={{
-            background:
-              i < current ? NW.ok : i === current ? NW.accent : `${NW.wait}44`,
-          }}
-        />
-      ))}
-    </div>
-  )
-}
-
-/* ---------- Benefit card ---------- */
-function BenefitCard({
-  icon,
+/* ---------- Journey Panel Component ---------- */
+function JourneyPanel({
   title,
-  desc,
-  color,
+  subtitle,
+  steps,
+  currentIdx,
+  currentStep,
+  variant,
+  cycleTime,
+  rft,
+  stp,
 }: {
-  icon: React.ReactNode
   title: string
-  desc: string
-  color: string
+  subtitle: string
+  steps: typeof TRADITIONAL_STEPS
+  currentIdx: number
+  currentStep: (typeof TRADITIONAL_STEPS)[0]
+  variant: "traditional" | "agent"
+  cycleTime: string
+  rft: string
+  stp: string
 }) {
+  const isTraditional = variant === "traditional"
+  const panelColor = isTraditional ? NW.error : NW.ok
+
   return (
     <div
-      className="rounded-xl border-2 p-4"
-      style={{ borderColor: `${color}33`, background: `${color}05` }}
+      className="overflow-hidden rounded-2xl border-2"
+      style={{ borderColor: `${panelColor}44` }}
     >
+      {/* Panel header */}
       <div
-        className="flex size-10 items-center justify-center rounded-lg text-white"
-        style={{ background: color }}
+        className="border-b px-4 py-3"
+        style={{ background: `${panelColor}08`, borderColor: `${panelColor}22` }}
       >
-        {icon}
+        <h2 className="font-bold" style={{ color: panelColor }}>
+          {isTraditional ? "❌ " : "✓ "}
+          {title}
+        </h2>
+        <p className="text-xs text-muted-foreground">{subtitle}</p>
       </div>
-      <h4 className="mt-2 font-bold" style={{ color }}>
-        {title}
-      </h4>
-      <p className="mt-0.5 text-xs text-muted-foreground">{desc}</p>
+
+      {/* Current step overlay */}
+      <div
+        key={currentStep.id}
+        className="animate-draw-in border-b p-3"
+        style={{
+          background: getStepBg(currentStep, isTraditional),
+          borderColor: `${panelColor}22`,
+        }}
+      >
+        <div className="flex items-center gap-3">
+          <StepIcon step={currentStep} isTraditional={isTraditional} />
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2">
+              <span
+                className="text-[10px] font-bold uppercase tracking-widest"
+                style={{ color: getStepColor(currentStep, isTraditional) }}
+              >
+                Step {currentIdx + 1}/{steps.length}
+              </span>
+              {currentStep.type === "wait" && (
+                <span className="animate-pulse rounded bg-amber-100 px-1.5 py-0.5 text-[9px] font-bold text-amber-700">
+                  WAITING 2-5 DAYS
+                </span>
+              )}
+              {currentStep.type === "agent" && (
+                <span
+                  className="rounded-full px-1.5 py-0.5 text-[9px] font-bold text-white"
+                  style={{ background: PILOT_AGENTS[(currentStep as any).agentIdx].color }}
+                >
+                  {PILOT_AGENTS[(currentStep as any).agentIdx].short}
+                </span>
+              )}
+            </div>
+            <div className="mt-0.5 font-semibold text-sm">{currentStep.label}</div>
+            <div className="text-xs text-muted-foreground truncate">{currentStep.overlay}</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Flow visualization */}
+      <div className="bg-card p-3">
+        <svg viewBox="0 0 400 120" className="w-full" style={{ height: 120 }}>
+          {/* Background */}
+          <rect x="0" y="0" width="400" height="120" fill={NW.bg} rx="8" />
+
+          {/* Flow path */}
+          <path
+            d={isTraditional 
+              ? "M20 60 L60 60 L100 30 L140 90 L180 30 L220 90 L260 60 L300 60 L340 60 L380 60"
+              : "M20 60 L380 60"
+            }
+            fill="none"
+            stroke={`${panelColor}33`}
+            strokeWidth="3"
+          />
+          <path
+            d={isTraditional 
+              ? "M20 60 L60 60 L100 30 L140 90 L180 30 L220 90 L260 60 L300 60 L340 60 L380 60"
+              : "M20 60 L380 60"
+            }
+            fill="none"
+            stroke={panelColor}
+            strokeWidth="2"
+            strokeDasharray="6 4"
+            className="animate-flow-dash"
+          />
+
+          {/* Step nodes */}
+          {steps.map((step, i) => {
+            const x = 20 + (i * 360) / (steps.length - 1)
+            const y = isTraditional 
+              ? (step.type === "error" || step.type === "wait" ? 90 : step.type === "contact" || step.type === "respond" ? 30 : 60)
+              : 60
+            const isActive = i === currentIdx
+            const isPast = i < currentIdx
+            const color = getStepColor(step, isTraditional)
+            const r = isActive ? 14 : 10
+
+            return (
+              <g key={step.id}>
+                {isActive && (
+                  <circle
+                    cx={x}
+                    cy={y}
+                    r={r + 6}
+                    fill="none"
+                    stroke={color}
+                    strokeWidth="2"
+                    opacity="0.4"
+                    className="animate-ping"
+                  />
+                )}
+                <circle
+                  cx={x}
+                  cy={y}
+                  r={r}
+                  fill={isPast || isActive ? color : `${color}44`}
+                  stroke={color}
+                  strokeWidth={isActive ? 2 : 1}
+                />
+                {/* Step number */}
+                <text
+                  x={x}
+                  y={y + 4}
+                  textAnchor="middle"
+                  fontSize={isActive ? 10 : 8}
+                  fontWeight="bold"
+                  fill="white"
+                >
+                  {i + 1}
+                </text>
+              </g>
+            )
+          })}
+
+          {/* Wait indicator for traditional */}
+          {isTraditional && currentIdx >= 5 && (
+            <g>
+              <rect x="150" y="95" width="100" height="18" rx="9" fill={NW.warn} />
+              <text x="200" y="107" textAnchor="middle" fontSize="9" fontWeight="bold" fill="white">
+                ⏳ WAITING...
+              </text>
+            </g>
+          )}
+        </svg>
+      </div>
+
+      {/* Metrics footer */}
+      <div
+        className="grid grid-cols-3 border-t text-center"
+        style={{ borderColor: `${panelColor}22` }}
+      >
+        <div className="border-r p-2" style={{ borderColor: `${panelColor}22` }}>
+          <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+            Cycle Time
+          </div>
+          <div className="text-sm font-bold" style={{ color: panelColor }}>
+            {cycleTime}
+          </div>
+        </div>
+        <div className="border-r p-2" style={{ borderColor: `${panelColor}22` }}>
+          <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+            RFT
+          </div>
+          <div className="text-sm font-bold" style={{ color: panelColor }}>
+            {rft}
+          </div>
+        </div>
+        <div className="p-2">
+          <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+            STP
+          </div>
+          <div className="text-sm font-bold" style={{ color: panelColor }}>
+            {stp}
+          </div>
+        </div>
+      </div>
     </div>
   )
 }
 
-/* ---------- Metrics section ---------- */
-function MetricsSection() {
-  const metrics = [
-    {
-      label: "Right First Time (RFT)",
-      before: "62%",
-      after: "94%",
-      improvement: "+52%",
-      color: NW.ok,
-    },
-    {
-      label: "Straight Through Processing",
-      before: "28%",
-      after: "78%",
-      improvement: "+179%",
-      color: NW.accent,
-    },
-    {
-      label: "Average Cycle Time",
-      before: "5-7 days",
-      after: "4-8 hours",
-      improvement: "-91%",
-      color: NW.agent,
-    },
-    {
-      label: "Customer Contacts",
-      before: "2.4 avg",
-      after: "0.2 avg",
-      improvement: "-92%",
-      color: NW.primary,
-    },
-  ]
+/* ---------- Helper: Step Icon ---------- */
+function StepIcon({
+  step,
+  isTraditional,
+}: {
+  step: (typeof TRADITIONAL_STEPS)[0]
+  isTraditional: boolean
+}) {
+  const color = getStepColor(step, isTraditional)
+
+  const Icon =
+    step.type === "customer" || step.type === "respond"
+      ? User
+      : step.type === "queue"
+        ? Clock
+        : step.type === "analyst"
+          ? FileSearch
+          : step.type === "error"
+            ? AlertTriangle
+            : step.type === "contact"
+              ? MessageSquare
+              : step.type === "wait"
+                ? Clock
+                : step.type === "agent"
+                  ? Bot
+                  : step.type === "prompt"
+                    ? MessageSquare
+                    : step.type === "success" || step.type === "complete"
+                      ? CheckCircle2
+                      : Check
 
   return (
-    <section className="mt-6 rounded-2xl border bg-card p-5 shadow-sm">
-      <h3
-        className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest"
-        style={{ color: NW.primary }}
-      >
-        <Sparkles className="size-4" />
-        Impact on Key Metrics
-      </h3>
-      <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {metrics.map((m) => (
-          <div
-            key={m.label}
-            className="rounded-xl border p-3"
-            style={{ borderColor: `${m.color}33` }}
-          >
-            <div className="text-xs font-medium text-muted-foreground">
-              {m.label}
-            </div>
-            <div className="mt-1 flex items-baseline gap-2">
-              <span className="text-sm line-through opacity-50">{m.before}</span>
-              <ArrowRight className="size-3 text-muted-foreground" />
-              <span className="text-xl font-bold" style={{ color: m.color }}>
-                {m.after}
-              </span>
-            </div>
-            <div
-              className="mt-1 text-xs font-bold"
-              style={{ color: m.color }}
-            >
-              {m.improvement}
-            </div>
-          </div>
-        ))}
-      </div>
-    </section>
+    <div
+      className="flex size-10 shrink-0 items-center justify-center rounded-full text-white"
+      style={{ background: color }}
+    >
+      <Icon className="size-5" />
+    </div>
   )
 }
 
-/* ---------- Agents section ---------- */
-function AgentsSection() {
-  return (
-    <section className="mt-6 rounded-2xl border bg-card p-5 shadow-sm">
-      <h3
-        className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest"
-        style={{ color: NW.agent }}
-      >
-        <Bot className="size-4" />
-        Pilot Agents in User Journey
-      </h3>
-      <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        {PILOT_AGENTS.map((agent) => (
-          <div
-            key={agent.id}
-            className="flex items-start gap-3 rounded-xl border p-3"
-            style={{ borderColor: `${agent.color}33` }}
-          >
-            <div
-              className="flex size-10 shrink-0 items-center justify-center rounded-lg text-xs font-bold text-white"
-              style={{ background: agent.color }}
-            >
-              {agent.short.slice(0, 3)}
-            </div>
-            <div>
-              <div className="font-semibold text-sm" style={{ color: agent.color }}>
-                {agent.name}
-              </div>
-              <div className="mt-0.5 text-xs text-muted-foreground">
-                Validates: {agent.check}
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
-    </section>
-  )
+/* ---------- Helper: Get step color ---------- */
+function getStepColor(
+  step: (typeof TRADITIONAL_STEPS)[0],
+  isTraditional: boolean
+): string {
+  if (step.type === "error") return NW.error
+  if (step.type === "wait") return NW.warn
+  if (step.type === "contact" || step.type === "respond") return NW.warn
+  if (step.type === "agent") return PILOT_AGENTS[(step as any).agentIdx]?.color || NW.agent
+  if (step.type === "prompt") return NW.warn
+  if (step.type === "success" || step.type === "complete") return NW.ok
+  if (step.type === "analyst") return NW.human
+  if (step.type === "queue") return NW.wait
+  return isTraditional ? NW.error : NW.ok
+}
+
+/* ---------- Helper: Get step background ---------- */
+function getStepBg(
+  step: (typeof TRADITIONAL_STEPS)[0],
+  isTraditional: boolean
+): string {
+  const color = getStepColor(step, isTraditional)
+  return `${color}08`
 }
