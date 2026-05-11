@@ -18,18 +18,20 @@ import {
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
-/* ---------- NatWest palette ---------- */
+/* ---------- NatWest palette (more colorful) ---------- */
 const NW = {
   primary: "#5a287d",
   accent: "#bd0f72",
-  customer: "#1e6cb8",
-  analyst: "#5a287d",
-  agent: "#1a8754",
-  ok: "#1a8754",
+  customer: "#0ea5e9",    // brighter blue
+  analyst: "#7c3aed",     // vibrant purple
+  agent: "#10b981",       // emerald green
+  ok: "#10b981",
   warn: "#f59e0b",
-  error: "#dc2626",
-  wait: "#94a3b8",
+  error: "#ef4444",       // brighter red
+  wait: "#64748b",
   bg: "#faf8fc",
+  dataFlow: "#06b6d4",    // cyan for data arrows
+  waitFlow: "#f97316",    // orange for wait arrows
 }
 
 /* ---------- Pilot agents in user journey ---------- */
@@ -148,18 +150,14 @@ export function UserJourneyFlow() {
                   issues are caught and fixed <strong>immediately</strong> while the customer is still engaged.
                   The analyst receives a <strong>pre-validated, complete application</strong> — no chasing, no waiting.
                 </p>
-                <div className="mt-3 flex flex-wrap gap-4 text-sm">
-                  <div>
-                    <span className="font-bold" style={{ color: NW.ok }}>RFT:</span>{" "}
-                    <span className="text-muted-foreground">62% → 94%</span>
+                <div className="mt-3 flex flex-wrap gap-6 text-sm">
+                  <div className="flex items-center gap-2">
+                    <span className="rounded-full px-2 py-0.5 text-xs font-bold text-white" style={{ background: NW.ok }}>RFT</span>
+                    <span className="font-semibold">62% → 94%</span>
                   </div>
-                  <div>
-                    <span className="font-bold" style={{ color: NW.ok }}>STP:</span>{" "}
-                    <span className="text-muted-foreground">28% → 78%</span>
-                  </div>
-                  <div>
-                    <span className="font-bold" style={{ color: NW.ok }}>Cycle Time:</span>{" "}
-                    <span className="text-muted-foreground">5-7 days → 4-8 hours</span>
+                  <div className="flex items-center gap-2">
+                    <span className="rounded-full px-2 py-0.5 text-xs font-bold text-white" style={{ background: NW.ok }}>STP</span>
+                    <span className="font-semibold">28% → 78%</span>
                   </div>
                 </div>
               </div>
@@ -269,91 +267,114 @@ function TraditionalJourney({ tick }: { tick: number }) {
 
       {/* SVG Swimlane visualization */}
       <div className="bg-card p-2 overflow-x-auto">
-        <svg viewBox="0 0 1000 180" className="w-full min-w-[600px]" style={{ height: 180 }}>
+        <svg viewBox="0 0 1000 200" className="w-full min-w-[600px]" style={{ height: 200 }}>
+          <defs>
+            {/* Arrow markers */}
+            <marker id="arrowWait" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+              <polygon points="0 0, 10 3.5, 0 7" fill={NW.waitFlow} />
+            </marker>
+            <marker id="arrowData" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+              <polygon points="0 0, 10 3.5, 0 7" fill={NW.error} />
+            </marker>
+          </defs>
+
           {/* Background */}
-          <rect x="0" y="0" width="1000" height="180" fill={NW.bg} />
+          <rect x="0" y="0" width="1000" height="200" fill={NW.bg} />
 
           {/* Customer Lane */}
-          <rect x="0" y="10" width="1000" height="70" fill={`${NW.customer}08`} rx="4" />
-          <text x="15" y="35" fontSize="10" fontWeight="bold" fill={NW.customer}>CUSTOMER</text>
+          <rect x="0" y="10" width="1000" height="75" fill={`${NW.customer}12`} rx="6" />
+          <text x="15" y="32" fontSize="11" fontWeight="bold" fill={NW.customer}>CUSTOMER</text>
 
           {/* Analyst Lane */}
-          <rect x="0" y="100" width="1000" height="70" fill={`${NW.analyst}08`} rx="4" />
-          <text x="15" y="125" fontSize="10" fontWeight="bold" fill={NW.analyst}>ANALYST</text>
+          <rect x="0" y="110" width="1000" height="75" fill={`${NW.analyst}12`} rx="6" />
+          <text x="15" y="132" fontSize="11" fontWeight="bold" fill={NW.analyst}>ANALYST</text>
 
           {/* Flow path - zigzag between lanes */}
           <path
-            d="M50 50 L150 50 L200 140 L350 140 L450 140 L550 140 L600 50 L750 50 L800 140 L950 140"
+            d="M50 50 L150 50 L200 145 L350 145 L450 145 L550 145 L600 50 L750 50 L800 145 L950 145"
             fill="none"
-            stroke={`${NW.error}33`}
-            strokeWidth="3"
+            stroke={`${NW.error}40`}
+            strokeWidth="4"
           />
           <path
-            d="M50 50 L150 50 L200 140 L350 140 L450 140 L550 140 L600 50 L750 50 L800 140 L950 140"
+            d="M50 50 L150 50 L200 145 L350 145 L450 145 L550 145 L600 50 L750 50 L800 145 L950 145"
             fill="none"
             stroke={NW.error}
             strokeWidth="2"
-            strokeDasharray="6 4"
+            strokeDasharray="8 4"
             className="animate-flow-dash"
           />
 
+          {/* ANIMATED DATA ARROWS - Analyst contacts customer */}
+          {tick >= 5 && (
+            <g className="animate-draw-in">
+              {/* Arrow down: Analyst sends request */}
+              <path d="M555 145 Q555 95 600 50" fill="none" stroke={NW.waitFlow} strokeWidth="3" markerEnd="url(#arrowWait)" strokeDasharray="6 3" className="animate-flow-dash" />
+              <text x="545" y="95" fontSize="8" fontWeight="bold" fill={NW.waitFlow} transform="rotate(-45 545 95)">Request info</text>
+            </g>
+          )}
+
+          {/* LONG WAIT ZONE */}
+          {tick >= 6 && tick <= 7 && (
+            <g>
+              <rect x="580" y="20" width="180" height="55" rx="8" fill={`${NW.warn}20`} stroke={NW.warn} strokeWidth="2" strokeDasharray="4 2" />
+              <text x="670" y="38" textAnchor="middle" fontSize="10" fontWeight="bold" fill={NW.warn}>WAITING FOR CUSTOMER</text>
+              <text x="670" y="52" textAnchor="middle" fontSize="14" fontWeight="bold" fill={NW.error} className="animate-pulse">2-5 DAYS</text>
+              <text x="670" y="68" textAnchor="middle" fontSize="8" fill={NW.wait}>Case sits idle...</text>
+            </g>
+          )}
+
+          {/* Arrow up: Customer finally responds */}
+          {tick >= 7 && (
+            <g className="animate-draw-in">
+              <path d="M750 50 Q750 95 800 145" fill="none" stroke={NW.dataFlow} strokeWidth="3" markerEnd="url(#arrowData)" strokeDasharray="6 3" className="animate-flow-dash" />
+              <text x="785" y="95" fontSize="8" fontWeight="bold" fill={NW.dataFlow} transform="rotate(45 785 95)">Response</text>
+            </g>
+          )}
+
           {/* Step nodes */}
           {steps.map((step, i) => {
-            const y = step.lane === "customer" ? 50 : 140
+            const y = step.lane === "customer" ? 50 : 145
             const isActive = i === tick
             const isPast = i < tick
             const color = step.isWait ? NW.warn : step.isError ? NW.error : step.isComplete ? NW.ok : step.lane === "customer" ? NW.customer : NW.analyst
-            const r = isActive ? 16 : 12
+            const r = isActive ? 18 : 13
 
             return (
               <g key={step.id}>
                 {isActive && (
-                  <circle cx={step.x} cy={y} r={r + 8} fill="none" stroke={color} strokeWidth="2" opacity="0.4" className="animate-ping" />
+                  <circle cx={step.x} cy={y} r={r + 10} fill="none" stroke={color} strokeWidth="2" opacity="0.5" className="animate-ping" />
                 )}
-                <circle cx={step.x} cy={y} r={r} fill={isPast || isActive ? color : `${color}33`} stroke={color} strokeWidth={isActive ? 3 : 1} />
-                <text x={step.x} y={y + 4} textAnchor="middle" fontSize={isActive ? 11 : 9} fontWeight="bold" fill="white">
+                <circle cx={step.x} cy={y} r={r} fill={isPast || isActive ? color : `${color}40`} stroke={color} strokeWidth={isActive ? 3 : 2} />
+                <text x={step.x} y={y + 4} textAnchor="middle" fontSize={isActive ? 12 : 10} fontWeight="bold" fill="white">
                   {i + 1}
                 </text>
                 {/* Label below */}
                 <text
                   x={step.x}
-                  y={step.lane === "customer" ? 75 : 165}
+                  y={step.lane === "customer" ? 78 : 173}
                   textAnchor="middle"
-                  fontSize="8"
+                  fontSize="9"
                   fill={color}
                   fontWeight={isActive ? "bold" : "normal"}
                 >
-                  {step.label.length > 12 ? step.label.slice(0, 12) + "..." : step.label}
+                  {step.label.length > 14 ? step.label.slice(0, 14) + "..." : step.label}
                 </text>
               </g>
             )
           })}
-
-          {/* Wait indicator */}
-          {isWaiting && (
-            <g>
-              <rect x="590" y="20" width="120" height="24" rx="12" fill={NW.warn} className="animate-pulse" />
-              <text x="650" y="36" textAnchor="middle" fontSize="10" fontWeight="bold" fill="white">
-                WAITING 2-5 DAYS
-              </text>
-            </g>
-          )}
         </svg>
       </div>
 
-      {/* Metrics */}
-      <div className="grid grid-cols-3 border-t text-center" style={{ borderColor: `${NW.error}22` }}>
-        <div className="border-r p-2" style={{ borderColor: `${NW.error}22` }}>
-          <div className="text-[10px] font-bold uppercase text-muted-foreground">Cycle Time</div>
-          <div className="text-sm font-bold" style={{ color: NW.error }}>5-7 days</div>
+      {/* Metrics - percentages only */}
+      <div className="grid grid-cols-2 border-t text-center" style={{ borderColor: `${NW.error}22` }}>
+        <div className="border-r p-3" style={{ borderColor: `${NW.error}22`, background: `${NW.error}05` }}>
+          <div className="text-[10px] font-bold uppercase text-muted-foreground">Right First Time</div>
+          <div className="text-lg font-bold" style={{ color: NW.error }}>~62%</div>
         </div>
-        <div className="border-r p-2" style={{ borderColor: `${NW.error}22` }}>
-          <div className="text-[10px] font-bold uppercase text-muted-foreground">RFT</div>
-          <div className="text-sm font-bold" style={{ color: NW.error }}>~62%</div>
-        </div>
-        <div className="p-2">
-          <div className="text-[10px] font-bold uppercase text-muted-foreground">STP</div>
-          <div className="text-sm font-bold" style={{ color: NW.error }}>~28%</div>
+        <div className="p-3" style={{ background: `${NW.error}05` }}>
+          <div className="text-[10px] font-bold uppercase text-muted-foreground">Straight Through</div>
+          <div className="text-lg font-bold" style={{ color: NW.error }}>~28%</div>
         </div>
       </div>
     </div>
@@ -434,35 +455,66 @@ function AgentJourney({ tick }: { tick: number }) {
 
       {/* SVG Swimlane visualization */}
       <div className="bg-card p-2 overflow-x-auto">
-        <svg viewBox="0 0 1000 180" className="w-full min-w-[600px]" style={{ height: 180 }}>
-          {/* Background */}
-          <rect x="0" y="0" width="1000" height="180" fill={NW.bg} />
+        <svg viewBox="0 0 1000 200" className="w-full min-w-[600px]" style={{ height: 200 }}>
+          <defs>
+            <marker id="arrowAgent" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+              <polygon points="0 0, 10 3.5, 0 7" fill={NW.agent} />
+            </marker>
+            <marker id="arrowCustomer" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+              <polygon points="0 0, 10 3.5, 0 7" fill={NW.customer} />
+            </marker>
+            {/* Gradient for agent zone */}
+            <linearGradient id="agentZoneGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stopColor={`${NW.agent}15`} />
+              <stop offset="50%" stopColor={`${NW.agent}25`} />
+              <stop offset="100%" stopColor={`${NW.agent}15`} />
+            </linearGradient>
+          </defs>
 
-          {/* Customer Lane with agent zone */}
-          <rect x="0" y="10" width="1000" height="70" fill={`${NW.customer}08`} rx="4" />
-          <rect x="140" y="15" width="500" height="60" fill={`${NW.agent}08`} rx="4" strokeDasharray="4 2" stroke={NW.agent} strokeWidth="1" />
-          <text x="15" y="35" fontSize="10" fontWeight="bold" fill={NW.customer}>CUSTOMER</text>
-          <text x="390" y="30" textAnchor="middle" fontSize="9" fontWeight="bold" fill={NW.agent}>AGENT VALIDATION ZONE</text>
+          {/* Background */}
+          <rect x="0" y="0" width="1000" height="200" fill={NW.bg} />
+
+          {/* Customer Lane */}
+          <rect x="0" y="10" width="1000" height="75" fill={`${NW.customer}12`} rx="6" />
+          <text x="15" y="32" fontSize="11" fontWeight="bold" fill={NW.customer}>CUSTOMER</text>
+
+          {/* Agent Validation Zone - highlighted */}
+          <rect x="140" y="15" width="520" height="65" fill="url(#agentZoneGrad)" rx="6" stroke={NW.agent} strokeWidth="2" strokeDasharray="6 3" />
+          <text x="400" y="30" textAnchor="middle" fontSize="10" fontWeight="bold" fill={NW.agent}>AGENT VALIDATION ZONE - Real-time checks</text>
 
           {/* Analyst Lane */}
-          <rect x="0" y="100" width="1000" height="70" fill={`${NW.analyst}08`} rx="4" />
-          <text x="15" y="125" fontSize="10" fontWeight="bold" fill={NW.analyst}>ANALYST</text>
+          <rect x="0" y="110" width="1000" height="75" fill={`${NW.analyst}12`} rx="6" />
+          <text x="15" y="132" fontSize="11" fontWeight="bold" fill={NW.analyst}>ANALYST</text>
 
           {/* Flow path - mostly straight, quick dip to analyst */}
           <path
-            d="M80 50 L680 50 L740 140 L920 140"
+            d="M80 50 L680 50 L740 145 L920 145"
             fill="none"
-            stroke={`${NW.ok}33`}
-            strokeWidth="3"
+            stroke={`${NW.ok}40`}
+            strokeWidth="4"
           />
           <path
-            d="M80 50 L680 50 L740 140 L920 140"
+            d="M80 50 L680 50 L740 145 L920 145"
             fill="none"
             stroke={NW.ok}
             strokeWidth="2"
-            strokeDasharray="6 4"
+            strokeDasharray="8 4"
             className="animate-flow-dash"
           />
+
+          {/* QUICK DATA ARROWS - Agent checks and prompts customer instantly */}
+          {hasAgent && tick >= 1 && tick <= 4 && (
+            <g className="animate-draw-in">
+              {/* Small bidirectional arrows showing instant validation */}
+              <circle cx={currentStep.x} cy="90" r="12" fill={PILOT_AGENTS[currentStep.agent!].color} className="animate-pulse" />
+              <text x={currentStep.x} y="94" textAnchor="middle" fontSize="8" fontWeight="bold" fill="white">OK</text>
+              {/* Arrow up from agent to customer */}
+              <path d={`M${currentStep.x - 15} 85 L${currentStep.x - 15} 60`} fill="none" stroke={NW.agent} strokeWidth="2" markerEnd="url(#arrowAgent)" />
+              {/* Arrow down from customer to agent */}
+              <path d={`M${currentStep.x + 15} 60 L${currentStep.x + 15} 85`} fill="none" stroke={NW.customer} strokeWidth="2" markerEnd="url(#arrowCustomer)" />
+              <text x={currentStep.x} y="105" textAnchor="middle" fontSize="7" fontWeight="bold" fill={NW.agent}>INSTANT</text>
+            </g>
+          )}
 
           {/* Step nodes */}
           {steps.map((step, i) => {
@@ -516,19 +568,15 @@ function AgentJourney({ tick }: { tick: number }) {
         </svg>
       </div>
 
-      {/* Metrics */}
-      <div className="grid grid-cols-3 border-t text-center" style={{ borderColor: `${NW.ok}22` }}>
-        <div className="border-r p-2" style={{ borderColor: `${NW.ok}22` }}>
-          <div className="text-[10px] font-bold uppercase text-muted-foreground">Cycle Time</div>
-          <div className="text-sm font-bold" style={{ color: NW.ok }}>4-8 hours</div>
+      {/* Metrics - percentages only */}
+      <div className="grid grid-cols-2 border-t text-center" style={{ borderColor: `${NW.ok}22` }}>
+        <div className="border-r p-3" style={{ borderColor: `${NW.ok}22`, background: `${NW.ok}08` }}>
+          <div className="text-[10px] font-bold uppercase text-muted-foreground">Right First Time</div>
+          <div className="text-lg font-bold" style={{ color: NW.ok }}>~94%</div>
         </div>
-        <div className="border-r p-2" style={{ borderColor: `${NW.ok}22` }}>
-          <div className="text-[10px] font-bold uppercase text-muted-foreground">RFT</div>
-          <div className="text-sm font-bold" style={{ color: NW.ok }}>~94%</div>
-        </div>
-        <div className="p-2">
-          <div className="text-[10px] font-bold uppercase text-muted-foreground">STP</div>
-          <div className="text-sm font-bold" style={{ color: NW.ok }}>~78%</div>
+        <div className="p-3" style={{ background: `${NW.ok}08` }}>
+          <div className="text-[10px] font-bold uppercase text-muted-foreground">Straight Through</div>
+          <div className="text-lg font-bold" style={{ color: NW.ok }}>~78%</div>
         </div>
       </div>
     </div>
