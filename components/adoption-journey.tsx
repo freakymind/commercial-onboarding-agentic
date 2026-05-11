@@ -40,13 +40,66 @@ const AGENTS = [
   { id: "apcmate", name: "APCMate", short: "APC", color: "#059669", Icon: Shield },
 ]
 
-/* ---------- Phase definitions ---------- */
+/* ---------- Phase definitions with importance text ---------- */
 type PhaseId = "human" | "shadow" | "assisted" | "live"
-const PHASES: { id: PhaseId; label: string; color: string }[] = [
-  { id: "human", label: "Human-Driven", color: NW.human },
-  { id: "shadow", label: "Shadow Mode", color: NW.shadow },
-  { id: "assisted", label: "Assisted Mode", color: NW.accent },
-  { id: "live", label: "Live Mode", color: NW.live },
+const PHASES: {
+  id: PhaseId
+  label: string
+  color: string
+  importance: string
+  benefits: string[]
+}[] = [
+  {
+    id: "human",
+    label: "Human-Driven",
+    color: NW.human,
+    importance:
+      "Current state baseline. Analysts manually process every application through all 7 stages. This is the starting point we measure all improvements against.",
+    benefits: [
+      "Establishes baseline metrics (cycle time, accuracy, cost)",
+      "Documents tacit analyst knowledge for agent training",
+      "Identifies high-volume, repeatable tasks for automation",
+    ],
+  },
+  {
+    id: "shadow",
+    label: "Shadow Mode",
+    color: NW.shadow,
+    importance:
+      "Zero-risk testing. Agents run in parallel, consuming live journey data and producing outputs — but analysts make all decisions. This builds confidence before any production impact.",
+    benefits: [
+      "Validates agent accuracy against real analyst decisions",
+      "Surfaces edge cases and failure modes safely",
+      "Builds audit trail and explainability evidence",
+      "No customer impact — agents are observers only",
+    ],
+  },
+  {
+    id: "assisted",
+    label: "Assisted Mode",
+    color: NW.accent,
+    importance:
+      "Analyst acceleration. High-confidence agent outputs surface as recommendations. Analysts approve, override or refine — cutting cycle time while maintaining full human control.",
+    benefits: [
+      "Reduces analyst cognitive load on routine checks",
+      "Cycle time drops from days to hours",
+      "Human-in-the-loop satisfies EU AI Act oversight",
+      "Continuous feedback loop improves agent accuracy",
+    ],
+  },
+  {
+    id: "live",
+    label: "Live Mode",
+    color: NW.live,
+    importance:
+      "Full integration. Agents become part of the journey, processing and handing off automatically. Humans provide oversight and handle exceptions only — the target operating model.",
+    benefits: [
+      "End-to-end automation for straight-through cases",
+      "Analysts focus on complex, high-value exceptions",
+      "Scalable capacity without linear headcount growth",
+      "Real-time monitoring and intervention capability",
+    ],
+  },
 ]
 
 /* ---------- SVG dimensions ---------- */
@@ -65,9 +118,16 @@ const STAGES = [
 ]
 
 /* ---------- Main Component ---------- */
+const SPEEDS = [
+  { label: "Slow", ms: 8000 },
+  { label: "Normal", ms: 4500 },
+  { label: "Fast", ms: 2000 },
+]
+
 export function AdoptionJourney() {
   const [phase, setPhase] = useState<PhaseId>("human")
   const [playing, setPlaying] = useState(true)
+  const [speedIdx, setSpeedIdx] = useState(1) // default Normal
 
   // Auto-advance phases for demo
   useEffect(() => {
@@ -77,9 +137,9 @@ export function AdoptionJourney() {
         const idx = PHASES.findIndex((ph) => ph.id === p)
         return PHASES[(idx + 1) % PHASES.length].id
       })
-    }, 4500)
+    }, SPEEDS[speedIdx].ms)
     return () => clearInterval(interval)
-  }, [playing])
+  }, [playing, speedIdx])
 
   const phaseIdx = PHASES.findIndex((p) => p.id === phase)
 
@@ -109,15 +169,34 @@ export function AdoptionJourney() {
                 </p>
               </div>
             </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setPlaying((p) => !p)}
-              className="gap-1.5"
-            >
-              {playing ? <Pause className="size-3.5" /> : <Play className="size-3.5" />}
-              {playing ? "Pause" : "Play"}
-            </Button>
+            <div className="flex items-center gap-2">
+              {/* Speed selector */}
+              <div className="flex items-center gap-1 rounded-lg border bg-muted/40 p-1">
+                {SPEEDS.map((s, i) => (
+                  <button
+                    key={s.label}
+                    onClick={() => setSpeedIdx(i)}
+                    className={`rounded-md px-2.5 py-1 text-[11px] font-semibold transition ${
+                      speedIdx === i
+                        ? "bg-background text-foreground shadow-sm"
+                        : "text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    {s.label}
+                  </button>
+                ))}
+              </div>
+              {/* Play/Pause */}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setPlaying((p) => !p)}
+                className="gap-1.5"
+              >
+                {playing ? <Pause className="size-3.5" /> : <Play className="size-3.5" />}
+                {playing ? "Pause" : "Play"}
+              </Button>
+            </div>
           </header>
 
           {/* Phase selector pills */}
@@ -149,6 +228,55 @@ export function AdoptionJourney() {
               )
             })}
           </div>
+
+          {/* Phase importance explanation */}
+          {(() => {
+            const currentPhase = PHASES[phaseIdx]
+            return (
+              <div
+                key={currentPhase.id}
+                className="animate-draw-in mt-4 rounded-xl border-2 p-4"
+                style={{
+                  borderColor: `${currentPhase.color}44`,
+                  background: `linear-gradient(135deg, ${currentPhase.color}08, transparent)`,
+                }}
+              >
+                <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:gap-6">
+                  <div className="flex-1">
+                    <div
+                      className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest"
+                      style={{ color: currentPhase.color }}
+                    >
+                      <Sparkles className="size-3.5" />
+                      Phase {phaseIdx + 1}: {currentPhase.label}
+                    </div>
+                    <p className="mt-1.5 text-sm leading-relaxed text-foreground">
+                      {currentPhase.importance}
+                    </p>
+                  </div>
+                  <div className="shrink-0 lg:w-[340px]">
+                    <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                      Key Benefits
+                    </div>
+                    <ul className="mt-1.5 space-y-1">
+                      {currentPhase.benefits.map((b, i) => (
+                        <li
+                          key={i}
+                          className="flex items-start gap-2 text-xs leading-snug text-muted-foreground"
+                        >
+                          <ChevronRight
+                            className="mt-0.5 size-3 shrink-0"
+                            style={{ color: currentPhase.color }}
+                          />
+                          {b}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            )
+          })()}
 
           {/* Main SVG flow diagram */}
           <div className="mt-5 overflow-x-auto rounded-2xl border-2 bg-card shadow-sm" style={{ borderColor: `${NW.primary}22` }}>
