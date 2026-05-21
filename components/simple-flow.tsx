@@ -296,6 +296,17 @@ export function SimpleFlow() {
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
+            <Link href="/roadmap">
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-1.5"
+                style={{ borderColor: `${NW.primary}44`, color: NW.primary }}
+              >
+                <Bot className="size-3.5" />
+                Agent Roadmap
+              </Button>
+            </Link>
             <Link href="/capture">
               <Button
                 variant="outline"
