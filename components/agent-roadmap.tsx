@@ -68,188 +68,208 @@ const AGENT_LAYERS = [
 
 export function AgentRoadmap() {
   return (
-    <div className="min-h-screen p-6" style={{ background: NW.bg }}>
-      <div className="mx-auto max-w-7xl">
-        {/* Header */}
-        <div className="mb-8 text-center">
-          <h1 className="text-3xl font-bold" style={{ color: NW.primary }}>
-            Agentic Capability Roadmap
-          </h1>
-          <p className="mt-2 text-muted-foreground">
-            Overview of AI agents across the commercial onboarding journey
-          </p>
+    <div className="min-h-screen p-4" style={{ background: NW.bg }}>
+      <div className="mx-auto max-w-6xl">
+        {/* Header - Compact */}
+        <div className="mb-4 flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold" style={{ color: NW.primary }}>
+              Agentic Capability Roadmap
+            </h1>
+            <p className="text-sm text-muted-foreground">
+              AI agents across commercial onboarding journey
+            </p>
+          </div>
+          <div className="flex gap-4">
+            {AGENT_LAYERS.map((layer) => {
+              const Icon = layer.icon
+              return (
+                <div key={layer.status} className="flex items-center gap-1.5 text-xs">
+                  <div
+                    className="flex size-5 items-center justify-center rounded-full text-white"
+                    style={{ background: layer.color }}
+                  >
+                    <Icon className="size-3" />
+                  </div>
+                  <span className="font-medium">{layer.status}</span>
+                  <span className="text-muted-foreground">({layer.agents.length})</span>
+                </div>
+              )
+            })}
+          </div>
         </div>
 
-        {/* Main Visualization */}
-        <div className="rounded-2xl border-2 bg-white p-6 shadow-sm" style={{ borderColor: `${NW.primary}22` }}>
-          
-          {/* Journey Header Row */}
-          <div className="mb-2 flex items-center gap-2">
-            <div className="w-48 shrink-0" />
-            <div className="flex flex-1 justify-between">
-              {JOURNEY_STAGES.map((stage) => (
-                <div
-                  key={stage.id}
-                  className="flex-1 text-center px-1"
-                >
-                  <div
-                    className="mx-auto mb-2 flex size-10 items-center justify-center rounded-full text-white font-bold text-sm"
-                    style={{ background: NW.primary }}
-                  >
-                    {stage.id}
-                  </div>
-                  <div className="text-[10px] font-medium text-muted-foreground whitespace-pre-line leading-tight">
-                    {stage.label}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Journey Flow Line */}
-          <div className="mb-6 flex items-center gap-2">
-            <div className="w-48 shrink-0 text-right pr-4">
-              <span className="text-xs font-bold uppercase tracking-wider" style={{ color: NW.primary }}>
-                Onboarding Journey
-              </span>
-            </div>
-            <div className="flex-1 relative h-3">
-              <div
-                className="absolute inset-0 rounded-full"
-                style={{ background: `linear-gradient(90deg, ${NW.primary}, ${NW.accent})` }}
-              />
-              {/* Stage markers */}
-              {JOURNEY_STAGES.map((stage, i) => (
-                <div
-                  key={stage.id}
-                  className="absolute top-1/2 -translate-y-1/2 size-3 rounded-full bg-white border-2"
-                  style={{
-                    left: `${(i / (JOURNEY_STAGES.length - 1)) * 100}%`,
-                    transform: "translate(-50%, -50%)",
-                    borderColor: NW.primary,
-                  }}
-                />
-              ))}
-            </div>
-          </div>
-
-          {/* Separator */}
-          <div className="mb-6 border-t-2 border-dashed" style={{ borderColor: `${NW.primary}22` }} />
-
-          {/* Agent Layers */}
-          {AGENT_LAYERS.map((layer, layerIdx) => {
-            const Icon = layer.icon
-            return (
-              <div key={layer.status} className="mb-6 last:mb-0">
-                {/* Layer Header */}
-                <div className="mb-3 flex items-center gap-2">
-                  <div
-                    className="w-48 shrink-0 flex items-center gap-2 rounded-lg px-3 py-2"
-                    style={{ background: `${layer.color}15` }}
-                  >
+        <div className="grid grid-cols-12 gap-4">
+          {/* Main Visualization - takes 9 columns */}
+          <div className="col-span-9 rounded-xl border-2 bg-white p-4 shadow-sm" style={{ borderColor: `${NW.primary}22` }}>
+            
+            {/* Journey Header Row - Compact */}
+            <div className="mb-1 flex items-center gap-1">
+              <div className="w-36 shrink-0" />
+              <div className="flex flex-1 justify-between">
+                {JOURNEY_STAGES.map((stage) => (
+                  <div key={stage.id} className="flex-1 text-center px-0.5">
                     <div
-                      className="flex size-8 items-center justify-center rounded-full text-white"
-                      style={{ background: layer.color }}
+                      className="mx-auto mb-1 flex size-7 items-center justify-center rounded-full text-white font-bold text-xs"
+                      style={{ background: NW.primary }}
                     >
-                      <Icon className="size-4" />
+                      {stage.id}
                     </div>
-                    <div>
-                      <div className="text-sm font-bold" style={{ color: layer.color }}>
+                    <div className="text-[8px] font-medium text-muted-foreground whitespace-pre-line leading-tight">
+                      {stage.label}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Journey Flow Line - Compact */}
+            <div className="mb-3 flex items-center gap-1">
+              <div className="w-36 shrink-0 text-right pr-2">
+                <span className="text-[9px] font-bold uppercase tracking-wider" style={{ color: NW.primary }}>
+                  Journey
+                </span>
+              </div>
+              <div className="flex-1 relative h-2">
+                <div
+                  className="absolute inset-0 rounded-full"
+                  style={{ background: `linear-gradient(90deg, ${NW.primary}, ${NW.accent})` }}
+                />
+                {JOURNEY_STAGES.map((stage, i) => (
+                  <div
+                    key={stage.id}
+                    className="absolute top-1/2 -translate-y-1/2 size-2 rounded-full bg-white border"
+                    style={{
+                      left: `${(i / (JOURNEY_STAGES.length - 1)) * 100}%`,
+                      transform: "translate(-50%, -50%)",
+                      borderColor: NW.primary,
+                    }}
+                  />
+                ))}
+              </div>
+            </div>
+
+            {/* Separator */}
+            <div className="mb-3 border-t border-dashed" style={{ borderColor: `${NW.primary}22` }} />
+
+            {/* Agent Layers - Compact */}
+            {AGENT_LAYERS.map((layer, layerIdx) => {
+              const Icon = layer.icon
+              return (
+                <div key={layer.status} className="mb-3 last:mb-0">
+                  {/* Layer Header */}
+                  <div className="mb-1.5 flex items-center gap-1">
+                    <div
+                      className="w-36 shrink-0 flex items-center gap-1.5 rounded px-2 py-1"
+                      style={{ background: `${layer.color}12` }}
+                    >
+                      <div
+                        className="flex size-5 items-center justify-center rounded-full text-white"
+                        style={{ background: layer.color }}
+                      >
+                        <Icon className="size-3" />
+                      </div>
+                      <div className="text-[10px] font-bold" style={{ color: layer.color }}>
                         {layer.status}
                       </div>
-                      <div className="text-[9px] text-muted-foreground">
-                        {layer.agents.length} agents
-                      </div>
                     </div>
                   </div>
-                  <div className="flex-1 text-xs text-muted-foreground">
-                    {layer.description}
+
+                  {/* Agent Rows - Compact */}
+                  <div className="space-y-1 pl-2">
+                    {layer.agents.map((agent) => (
+                      <div key={agent.name} className="flex items-center gap-1">
+                        <div className="w-34 shrink-0 flex items-center gap-1">
+                          <Bot className="size-3" style={{ color: layer.color }} />
+                          <span className="text-[10px] font-medium truncate">{agent.name}</span>
+                        </div>
+                        <div className="flex flex-1 justify-between">
+                          {JOURNEY_STAGES.map((stage) => {
+                            const isActive = agent.stages.includes(stage.id)
+                            return (
+                              <div key={stage.id} className="flex-1 flex justify-center">
+                                {isActive ? (
+                                  <div
+                                    className="size-4 rounded-full flex items-center justify-center"
+                                    style={{ background: `${layer.color}25` }}
+                                  >
+                                    <CheckCircle2 className="size-3" style={{ color: layer.color }} />
+                                  </div>
+                                ) : (
+                                  <div className="size-4 flex items-center justify-center">
+                                    <div className="size-1 rounded-full" style={{ background: `${NW.muted}33` }} />
+                                  </div>
+                                )}
+                              </div>
+                            )
+                          })}
+                        </div>
+                      </div>
+                    ))}
                   </div>
+
+                  {layerIdx < AGENT_LAYERS.length - 1 && (
+                    <div className="mt-2 border-t" style={{ borderColor: `${NW.muted}15` }} />
+                  )}
                 </div>
+              )
+            })}
+          </div>
 
-                {/* Agent Rows */}
-                <div className="space-y-2 pl-4">
-                  {layer.agents.map((agent) => (
-                    <div key={agent.name} className="flex items-center gap-2">
-                      {/* Agent Name */}
-                      <div className="w-44 shrink-0 flex items-center gap-2">
-                        <Bot className="size-4" style={{ color: layer.color }} />
-                        <span className="text-xs font-medium truncate">{agent.name}</span>
-                      </div>
-                      {/* Stage Coverage */}
-                      <div className="flex flex-1 justify-between">
-                        {JOURNEY_STAGES.map((stage) => {
-                          const isActive = agent.stages.includes(stage.id)
-                          return (
-                            <div key={stage.id} className="flex-1 flex justify-center">
-                              {isActive ? (
-                                <div
-                                  className="size-6 rounded-full flex items-center justify-center"
-                                  style={{ background: `${layer.color}20` }}
-                                >
-                                  <CheckCircle2
-                                    className="size-4"
-                                    style={{ color: layer.color }}
-                                  />
-                                </div>
-                              ) : (
-                                <div className="size-6 rounded-full border border-dashed flex items-center justify-center" style={{ borderColor: `${NW.muted}44` }}>
-                                  <div className="size-1.5 rounded-full" style={{ background: `${NW.muted}33` }} />
-                                </div>
-                              )}
-                            </div>
-                          )
-                        })}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                {/* Separator between layers */}
-                {layerIdx < AGENT_LAYERS.length - 1 && (
-                  <div className="mt-4 border-t" style={{ borderColor: `${NW.muted}22` }} />
-                )}
+          {/* Sidebar - Key Insights - takes 3 columns */}
+          <div className="col-span-3 space-y-3">
+            {/* What is this */}
+            <div className="rounded-xl border bg-white p-3" style={{ borderColor: `${NW.primary}22` }}>
+              <div className="flex items-center gap-2 mb-2">
+                <Lightbulb className="size-4" style={{ color: NW.primary }} />
+                <h3 className="text-sm font-bold" style={{ color: NW.primary }}>What is this?</h3>
               </div>
-            )
-          })}
-        </div>
-
-        {/* Legend */}
-        <div className="mt-6 flex flex-wrap justify-center gap-6">
-          {AGENT_LAYERS.map((layer) => {
-            const Icon = layer.icon
-            return (
-              <div key={layer.status} className="flex items-center gap-2">
-                <div
-                  className="flex size-6 items-center justify-center rounded-full text-white"
-                  style={{ background: layer.color }}
-                >
-                  <Icon className="size-3" />
-                </div>
-                <span className="text-sm font-medium">{layer.status}</span>
-                <span className="text-xs text-muted-foreground">({layer.agents.length})</span>
-              </div>
-            )
-          })}
-        </div>
-
-        {/* Summary Stats */}
-        <div className="mt-6 grid grid-cols-3 gap-4">
-          {AGENT_LAYERS.map((layer) => (
-            <div
-              key={layer.status}
-              className="rounded-xl p-4 text-center"
-              style={{ background: `${layer.color}10`, borderLeft: `4px solid ${layer.color}` }}
-            >
-              <div className="text-3xl font-bold" style={{ color: layer.color }}>
-                {layer.agents.length}
-              </div>
-              <div className="text-sm font-medium">{layer.status}</div>
-              <div className="mt-1 text-xs text-muted-foreground">
-                {layer.agents.map((a) => a.name).join(", ")}
-              </div>
+              <p className="text-[11px] text-muted-foreground leading-relaxed">
+                This roadmap shows all AI agents being developed for commercial onboarding. 
+                Each agent automates specific checks across the 7-stage journey, reducing manual effort and improving accuracy.
+              </p>
             </div>
-          ))}
+
+            {/* Summary Stats */}
+            {AGENT_LAYERS.map((layer) => (
+              <div
+                key={layer.status}
+                className="rounded-xl p-3"
+                style={{ background: `${layer.color}08`, borderLeft: `3px solid ${layer.color}` }}
+              >
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-xs font-bold" style={{ color: layer.color }}>{layer.status}</span>
+                  <span className="text-lg font-bold" style={{ color: layer.color }}>{layer.agents.length}</span>
+                </div>
+                <p className="text-[10px] text-muted-foreground leading-snug">
+                  {layer.agents.map((a) => a.name).join(", ")}
+                </p>
+              </div>
+            ))}
+
+            {/* Key Benefits */}
+            <div className="rounded-xl border bg-white p-3" style={{ borderColor: `${NW.primary}22` }}>
+              <h3 className="text-sm font-bold mb-2" style={{ color: NW.primary }}>Key Benefits</h3>
+              <ul className="space-y-1.5 text-[10px] text-muted-foreground">
+                <li className="flex items-start gap-1.5">
+                  <CheckCircle2 className="size-3 mt-0.5 shrink-0" style={{ color: NW.live }} />
+                  <span>Faster processing with automated checks</span>
+                </li>
+                <li className="flex items-start gap-1.5">
+                  <CheckCircle2 className="size-3 mt-0.5 shrink-0" style={{ color: NW.live }} />
+                  <span>Higher accuracy and consistency</span>
+                </li>
+                <li className="flex items-start gap-1.5">
+                  <CheckCircle2 className="size-3 mt-0.5 shrink-0" style={{ color: NW.live }} />
+                  <span>Analysts focus on complex cases</span>
+                </li>
+                <li className="flex items-start gap-1.5">
+                  <CheckCircle2 className="size-3 mt-0.5 shrink-0" style={{ color: NW.live }} />
+                  <span>Scalable capacity without headcount</span>
+                </li>
+              </ul>
+            </div>
+          </div>
         </div>
       </div>
     </div>
