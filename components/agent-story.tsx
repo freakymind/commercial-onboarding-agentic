@@ -4,6 +4,7 @@ import {
   Rocket,
   Code2,
   FlaskConical,
+  Lightbulb,
   Bot,
   Clock,
   Shield,
@@ -20,6 +21,7 @@ const NW = {
   live: "#10b981",
   dev: "#f59e0b",
   research: "#8b5cf6",
+  planned: "#0ea5e9",
   bg: "#faf8fc",
   text: "#1e1b2e",
   muted: "#64748b",
@@ -60,6 +62,17 @@ const RESEARCH_AGENTS = [
   { name: "Sanctions Screen", impact: "Real-time sanctions & PEP screening", stages: [4, 6] },
 ]
 
+/* ---------- Planned / Identified agents (from main journey) ---------- */
+const PLANNED_AGENTS = [
+  { name: "Application Intake", impact: "Smart triage of incoming applications", stages: [1] },
+  { name: "Case Allocation", impact: "Routes cases to the right analyst", stages: [1] },
+  { name: "Customer & Ops Comms", impact: "Auto-drafts customer communications", stages: [1, 6] },
+  { name: "Web Search & Maps", impact: "Verifies trading presence online & physical", stages: [3] },
+  { name: "Banking Data", impact: "Pulls & analyses banking data feeds", stages: [5] },
+  { name: "Risk Scoring", impact: "Composite risk score across all signals", stages: [6] },
+  { name: "Decision Agent", impact: "Recommends approve / refer / decline", stages: [6] },
+]
+
 const PHASE_IMPACT = {
   live: {
     headline: "Foundation set",
@@ -86,6 +99,15 @@ const PHASE_IMPACT = {
     metrics: [
       { label: "Target RFT", value: "94%" },
       { label: "Target STP", value: "78%" },
+    ],
+  },
+  planned: {
+    headline: "Identified & on the backlog",
+    statement:
+      "6-7 additional agents identified from the main onboarding journey — bringing total agentic coverage to ~20 agents end-to-end",
+    metrics: [
+      { label: "Total pipeline", value: "20" },
+      { label: "Journey coverage", value: "100%" },
     ],
   },
 }
@@ -124,6 +146,7 @@ export function AgentStory() {
               <Legend color={NW.live} label="Live" />
               <Legend color={NW.dev} label="In Build" />
               <Legend color={NW.research} label="Research" />
+              <Legend color={NW.planned} label="Planned" />
             </div>
           </div>
 
@@ -132,6 +155,7 @@ export function AgentStory() {
               const liveCount = LIVE_AGENTS.filter((a) => a.stages.includes(stage.id)).length
               const devCount = DEV_AGENTS.filter((a) => a.stages.includes(stage.id)).length
               const researchCount = RESEARCH_AGENTS.filter((a) => a.stages.includes(stage.id)).length
+              const plannedCount = PLANNED_AGENTS.filter((a) => a.stages.includes(stage.id)).length
               return (
                 <div key={stage.id} className="flex flex-1 items-center">
                   <div className="flex flex-1 flex-col items-center">
@@ -147,10 +171,11 @@ export function AgentStory() {
                     >
                       {stage.label}
                     </div>
-                    <div className="mt-1 flex gap-0.5">
+                    <div className="mt-1 flex flex-wrap justify-center gap-0.5">
                       {liveCount > 0 && <Dot color={NW.live} count={liveCount} />}
                       {devCount > 0 && <Dot color={NW.dev} count={devCount} />}
                       {researchCount > 0 && <Dot color={NW.research} count={researchCount} />}
+                      {plannedCount > 0 && <Dot color={NW.planned} count={plannedCount} />}
                     </div>
                   </div>
                   {i < JOURNEY_STAGES.length - 1 && (
@@ -162,8 +187,8 @@ export function AgentStory() {
           </div>
         </div>
 
-        {/* Three Phase Columns - Story Progression */}
-        <div className="grid gap-4 lg:grid-cols-3">
+        {/* Four Phase Columns - Story Progression */}
+        <div className="grid gap-3 lg:grid-cols-4">
           <PhaseColumn
             phase="Live Today"
             phaseLabel="Deployed"
@@ -191,6 +216,15 @@ export function AgentStory() {
             impact={PHASE_IMPACT.research}
             stepNum={3}
           />
+          <PhaseColumn
+            phase="Planned & Identified"
+            phaseLabel="Backlog"
+            color={NW.planned}
+            icon={Lightbulb}
+            agents={PLANNED_AGENTS}
+            impact={PHASE_IMPACT.planned}
+            stepNum={4}
+          />
         </div>
 
         {/* Bottom executive summary */}
@@ -217,21 +251,25 @@ export function AgentStory() {
                 <span className="font-semibold" style={{ color: NW.live }}>
                   4 agents in production today
                 </span>{" "}
-                — proving the model works. As we ship the next{" "}
+                — proving the model works. The next{" "}
                 <span className="font-semibold" style={{ color: NW.dev }}>
                   5 agents in build
-                </span>
-                , customer-facing validation goes live, dramatically lifting Right-First-Time and
-                Straight-Through rates. The final{" "}
+                </span>{" "}
+                bring customer-facing validation, then{" "}
                 <span className="font-semibold" style={{ color: NW.research }}>
                   5 research agents
                 </span>{" "}
-                will close the loop on complex cases — taking us from{" "}
-                <span className="font-bold">62% → 94% RFT</span> and{" "}
+                close complex cases, and a further{" "}
+                <span className="font-semibold" style={{ color: NW.planned }}>
+                  6-7 planned agents
+                </span>{" "}
+                from the journey blueprint take us to{" "}
+                <span className="font-bold">~20 agents</span> covering every stage end-to-end —
+                lifting <span className="font-bold">62% → 94% RFT</span> and{" "}
                 <span className="font-bold">28% → 78% STP</span>.
               </p>
               <div className="mt-3 grid grid-cols-2 gap-2 md:grid-cols-4">
-                <SummaryStat icon={Zap} label="14 agents in pipeline" color={NW.primary} />
+                <SummaryStat icon={Zap} label="~20 agents end-to-end" color={NW.primary} />
                 <SummaryStat icon={Clock} label="5-7 days → hours" color={NW.accent} />
                 <SummaryStat icon={Shield} label="Higher accuracy" color={NW.live} />
                 <SummaryStat icon={Users} label="Analysts → complex cases" color={NW.dev} />
