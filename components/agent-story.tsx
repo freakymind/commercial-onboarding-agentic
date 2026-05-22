@@ -4,7 +4,6 @@ import {
   Rocket,
   Code2,
   FlaskConical,
-  Lightbulb,
   Bot,
   Clock,
   Shield,
@@ -13,6 +12,7 @@ import {
   ArrowRight,
   Target,
   Zap,
+  Layers,
 } from "lucide-react"
 
 const NW = {
@@ -21,7 +21,7 @@ const NW = {
   live: "#10b981",
   dev: "#f59e0b",
   research: "#8b5cf6",
-  planned: "#0ea5e9",
+  foundation: "#0ea5e9",
   bg: "#faf8fc",
   text: "#1e1b2e",
   muted: "#64748b",
@@ -38,7 +38,7 @@ const JOURNEY_STAGES = [
   { id: 7, label: "TM Setup" },
 ]
 
-/* ---------- Agents grouped by status, with stage coverage ---------- */
+/* ---------- 3 Pillars: Active agents working today / next / later ---------- */
 const LIVE_AGENTS = [
   { name: "OpsMate", impact: "Orchestrates end-to-end onboarding", stages: [1, 2, 3, 4, 5, 6, 7] },
   { name: "Business Verification", impact: "Validates registered businesses instantly", stages: [3] },
@@ -58,19 +58,17 @@ const RESEARCH_AGENTS = [
   { name: "Complex Ownership", impact: "Untangles multi-layer corporate structures", stages: [4] },
   { name: "Business Plan Review", impact: "Assesses business plan viability", stages: [3, 5] },
   { name: "Company Financial", impact: "Analyses financial statements & ratios", stages: [5] },
-  { name: "Transaction Monitoring", impact: "Monitors ongoing transaction risk", stages: [7] },
   { name: "Sanctions Screen", impact: "Real-time sanctions & PEP screening", stages: [4, 6] },
 ]
 
-/* ---------- Planned / Identified agents (from main journey) ---------- */
-const PLANNED_AGENTS = [
-  { name: "Application Intake", impact: "Smart triage of incoming applications", stages: [1] },
-  { name: "Case Allocation", impact: "Routes cases to the right analyst", stages: [1] },
-  { name: "Customer & Ops Comms", impact: "Auto-drafts customer communications", stages: [1, 6] },
-  { name: "Web Search & Maps", impact: "Verifies trading presence online & physical", stages: [3] },
-  { name: "Banking Data", impact: "Pulls & analyses banking data feeds", stages: [5] },
-  { name: "Risk Scoring", impact: "Composite risk score across all signals", stages: [6] },
-  { name: "Decision Agent", impact: "Recommends approve / refer / decline", stages: [6] },
+/* ---------- Foundation / Underlying agents that span the platform ---------- */
+const FOUNDATION_AGENTS = [
+  { name: "Decision Agent", impact: "Approve / refer / decline recommendation" },
+  { name: "Cash Check", impact: "Cash deposit & flow validation" },
+  { name: "Transaction Monitoring", impact: "Ongoing transaction risk surveillance" },
+  { name: "LLM Onboarding", impact: "Conversational onboarding co-pilot" },
+  { name: "Conversation Agent", impact: "Customer & analyst dialogue handler" },
+  { name: "Customer View Agent", impact: "360° customer profile aggregation" },
 ]
 
 const PHASE_IMPACT = {
@@ -95,24 +93,18 @@ const PHASE_IMPACT = {
   research: {
     headline: "Complex cases next",
     statement:
-      "5 agents in design — tackling complex ownership, financials & ongoing monitoring to reach full coverage",
+      "4 agents in design — tackling complex ownership, financials & ongoing monitoring to reach full coverage",
     metrics: [
       { label: "Target RFT", value: "94%" },
       { label: "Target STP", value: "78%" },
     ],
   },
-  planned: {
-    headline: "Identified & on the backlog",
-    statement:
-      "6-7 additional agents identified from the main onboarding journey — bringing total agentic coverage to ~20 agents end-to-end",
-    metrics: [
-      { label: "Total pipeline", value: "20" },
-      { label: "Journey coverage", value: "100%" },
-    ],
-  },
 }
 
 export function AgentStory() {
+  const totalActive = LIVE_AGENTS.length + DEV_AGENTS.length + RESEARCH_AGENTS.length
+  const totalAll = totalActive + FOUNDATION_AGENTS.length
+
   return (
     <div className="min-h-screen p-6" style={{ background: NW.bg }}>
       <div className="mx-auto max-w-7xl">
@@ -146,7 +138,6 @@ export function AgentStory() {
               <Legend color={NW.live} label="Live" />
               <Legend color={NW.dev} label="In Build" />
               <Legend color={NW.research} label="Research" />
-              <Legend color={NW.planned} label="Planned" />
             </div>
           </div>
 
@@ -155,7 +146,6 @@ export function AgentStory() {
               const liveCount = LIVE_AGENTS.filter((a) => a.stages.includes(stage.id)).length
               const devCount = DEV_AGENTS.filter((a) => a.stages.includes(stage.id)).length
               const researchCount = RESEARCH_AGENTS.filter((a) => a.stages.includes(stage.id)).length
-              const plannedCount = PLANNED_AGENTS.filter((a) => a.stages.includes(stage.id)).length
               return (
                 <div key={stage.id} className="flex flex-1 items-center">
                   <div className="flex flex-1 flex-col items-center">
@@ -175,7 +165,6 @@ export function AgentStory() {
                       {liveCount > 0 && <Dot color={NW.live} count={liveCount} />}
                       {devCount > 0 && <Dot color={NW.dev} count={devCount} />}
                       {researchCount > 0 && <Dot color={NW.research} count={researchCount} />}
-                      {plannedCount > 0 && <Dot color={NW.planned} count={plannedCount} />}
                     </div>
                   </div>
                   {i < JOURNEY_STAGES.length - 1 && (
@@ -187,8 +176,8 @@ export function AgentStory() {
           </div>
         </div>
 
-        {/* Four Phase Columns - Story Progression */}
-        <div className="grid gap-3 lg:grid-cols-4">
+        {/* Three Pillar Columns - Active agents working */}
+        <div className="grid gap-4 lg:grid-cols-3">
           <PhaseColumn
             phase="Live Today"
             phaseLabel="Deployed"
@@ -216,15 +205,74 @@ export function AgentStory() {
             impact={PHASE_IMPACT.research}
             stepNum={3}
           />
-          <PhaseColumn
-            phase="Planned & Identified"
-            phaseLabel="Backlog"
-            color={NW.planned}
-            icon={Lightbulb}
-            agents={PLANNED_AGENTS}
-            impact={PHASE_IMPACT.planned}
-            stepNum={4}
-          />
+        </div>
+
+        {/* Foundation Layer - cross-cutting agents underpinning the pillars */}
+        <div
+          className="mt-4 overflow-hidden rounded-2xl border-2 shadow-sm"
+          style={{ borderColor: `${NW.foundation}55`, background: "white" }}
+        >
+          <div
+            className="flex items-center justify-between px-4 py-3"
+            style={{ background: `${NW.foundation}10`, borderBottom: `1px solid ${NW.foundation}22` }}
+          >
+            <div className="flex items-center gap-3">
+              <div
+                className="flex size-9 items-center justify-center rounded-lg text-white shadow-sm"
+                style={{ background: NW.foundation }}
+              >
+                <Layers className="size-4" />
+              </div>
+              <div>
+                <div className="text-[10px] font-bold uppercase tracking-wider" style={{ color: NW.foundation }}>
+                  Common Underlying Layer · Identified & Planned
+                </div>
+                <div className="text-base font-bold" style={{ color: NW.text }}>
+                  Foundation Agents — supporting all 3 pillars
+                </div>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-[11px]" style={{ color: NW.muted }}>
+                +{FOUNDATION_AGENTS.length} more identified
+              </span>
+              <div
+                className="flex size-9 items-center justify-center rounded-full font-bold text-white"
+                style={{ background: NW.foundation }}
+              >
+                {FOUNDATION_AGENTS.length}
+              </div>
+            </div>
+          </div>
+
+          <div className="px-4 py-3" style={{ background: `${NW.foundation}05` }}>
+            <p className="text-xs leading-relaxed" style={{ color: NW.text }}>
+              These agents cut across every stage and every pillar — they are the connective tissue
+              of the agentic platform. Together with the {totalActive} pillar agents, they expand the
+              total agentic footprint to <span className="font-bold">~{totalAll} agents</span> within
+              onboarding.
+            </p>
+          </div>
+
+          <div className="grid gap-2 p-3 sm:grid-cols-2 lg:grid-cols-3">
+            {FOUNDATION_AGENTS.map((agent) => (
+              <div
+                key={agent.name}
+                className="rounded-lg p-2.5"
+                style={{ borderLeft: `3px solid ${NW.foundation}`, background: `${NW.foundation}06` }}
+              >
+                <div className="flex items-center gap-1.5">
+                  <Bot className="size-3 shrink-0" style={{ color: NW.foundation }} />
+                  <span className="text-xs font-semibold" style={{ color: NW.text }}>
+                    {agent.name}
+                  </span>
+                </div>
+                <p className="mt-0.5 pl-4 text-[10px] leading-snug text-muted-foreground">
+                  {agent.impact}
+                </p>
+              </div>
+            ))}
+          </div>
         </div>
 
         {/* Bottom executive summary */}
@@ -247,29 +295,29 @@ export function AgentStory() {
                 The Story: Continuous Deployment, Compounding Impact
               </h3>
               <p className="mt-1 text-sm leading-relaxed" style={{ color: NW.text }}>
-                We start with{" "}
+                Three pillars of journey-specific agents —{" "}
                 <span className="font-semibold" style={{ color: NW.live }}>
-                  4 agents in production today
-                </span>{" "}
-                — proving the model works. The next{" "}
+                  4 live
+                </span>
+                ,{" "}
                 <span className="font-semibold" style={{ color: NW.dev }}>
-                  5 agents in build
-                </span>{" "}
-                bring customer-facing validation, then{" "}
+                  5 in build
+                </span>
+                ,{" "}
                 <span className="font-semibold" style={{ color: NW.research }}>
-                  5 research agents
+                  4 in research
                 </span>{" "}
-                close complex cases, and a further{" "}
-                <span className="font-semibold" style={{ color: NW.planned }}>
-                  6-7 planned agents
+                — sit on top of a{" "}
+                <span className="font-semibold" style={{ color: NW.foundation }}>
+                  {FOUNDATION_AGENTS.length}-agent foundation layer
                 </span>{" "}
-                from the journey blueprint take us to{" "}
-                <span className="font-bold">~20 agents</span> covering every stage end-to-end —
-                lifting <span className="font-bold">62% → 94% RFT</span> and{" "}
+                spanning decisions, monitoring, conversation and customer view. Together: ~
+                <span className="font-bold">{totalAll} agents end-to-end</span>, lifting{" "}
+                <span className="font-bold">62% → 94% RFT</span> and{" "}
                 <span className="font-bold">28% → 78% STP</span>.
               </p>
               <div className="mt-3 grid grid-cols-2 gap-2 md:grid-cols-4">
-                <SummaryStat icon={Zap} label="~20 agents end-to-end" color={NW.primary} />
+                <SummaryStat icon={Zap} label={`~${totalAll} agents end-to-end`} color={NW.primary} />
                 <SummaryStat icon={Clock} label="5-7 days → hours" color={NW.accent} />
                 <SummaryStat icon={Shield} label="Higher accuracy" color={NW.live} />
                 <SummaryStat icon={Users} label="Analysts → complex cases" color={NW.dev} />
@@ -318,7 +366,7 @@ function PhaseColumn({
             </div>
             <div>
               <div className="text-[10px] font-bold uppercase tracking-wider" style={{ color }}>
-                Step {stepNum} · {phaseLabel}
+                Pillar {stepNum} · {phaseLabel}
               </div>
               <div className="text-base font-bold" style={{ color: NW.text }}>
                 {phase}
@@ -363,7 +411,7 @@ function PhaseColumn({
       {/* Agent list */}
       <div className="p-3">
         <div className="mb-2 text-[10px] font-bold uppercase tracking-wider" style={{ color: NW.muted }}>
-          Agents
+          Active Agents
         </div>
         <div className="space-y-1.5">
           {agents.map((agent) => (
