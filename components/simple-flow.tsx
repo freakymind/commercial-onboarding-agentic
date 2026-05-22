@@ -18,6 +18,7 @@ import {
   Play,
   RotateCcw,
   Sparkles,
+  TrendingUp,
   User,
   UserCheck,
   UserCircle2,
@@ -296,6 +297,17 @@ export function SimpleFlow() {
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
+            <Link href="/story">
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-1.5"
+                style={{ borderColor: `${NW.live}44`, color: NW.live }}
+              >
+                <TrendingUp className="size-3.5" />
+                Agent Story
+              </Button>
+            </Link>
             <Link href="/roadmap">
               <Button
                 variant="outline"
