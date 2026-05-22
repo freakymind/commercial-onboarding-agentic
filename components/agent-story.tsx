@@ -1,262 +1,396 @@
 "use client"
 
-import { Bot, Rocket, Code2, FlaskConical, TrendingUp, Users, Clock, CheckCircle2, ArrowRight } from "lucide-react"
+import {
+  Rocket,
+  Code2,
+  FlaskConical,
+  Bot,
+  Clock,
+  Shield,
+  Users,
+  Sparkles,
+  ArrowRight,
+  Target,
+  Zap,
+} from "lucide-react"
 
-/* ---------- NatWest palette ---------- */
 const NW = {
   primary: "#5a287d",
   accent: "#bd0f72",
   live: "#10b981",
   dev: "#f59e0b",
-  research: "#6366f1",
+  research: "#8b5cf6",
   bg: "#faf8fc",
+  text: "#1e1b2e",
   muted: "#64748b",
 }
 
-/* ---------- Agents by status with expected benefits ---------- */
-const AGENTS = {
-  live: [
-    { name: "OpsMate", benefit: "30% faster routing" },
-    { name: "Business Verification", benefit: "85% auto-verified" },
-    { name: "Sole Trader Verification", benefit: "70% STP rate" },
-    { name: "APC Mate", benefit: "40% faster decisions" },
-  ],
-  dev: [
-    { name: "Document Intelligence", benefit: "60% faster doc review" },
-    { name: "UBO Check", benefit: "Auto ownership mapping" },
-    { name: "Address Density", benefit: "Risk scoring" },
-    { name: "Plausibility", benefit: "Anomaly detection" },
-    { name: "Source of Fund", benefit: "Automated SOF checks" },
-  ],
-  research: [
-    { name: "Complex Ownership", benefit: "Multi-layer structures" },
-    { name: "Business Plan Review", benefit: "AI-driven analysis" },
-    { name: "Company Financial", benefit: "Auto financial review" },
-    { name: "Transaction Monitoring", benefit: "Real-time alerts" },
-    { name: "Sanctions Screen", benefit: "Continuous screening" },
-  ],
-}
-
-/* ---------- Cumulative benefits story ---------- */
-const BENEFIT_MILESTONES = [
-  { agents: 0, rft: 62, stp: 28, label: "Baseline" },
-  { agents: 4, rft: 78, stp: 52, label: "Today (4 Live)" },
-  { agents: 9, rft: 88, stp: 68, label: "+5 In Dev" },
-  { agents: 14, rft: 94, stp: 78, label: "+5 Research" },
+/* ---------- Onboarding Journey (matching main flow) ---------- */
+const JOURNEY_STAGES = [
+  { id: 1, label: "Application Submit" },
+  { id: 2, label: "Identity Verify" },
+  { id: 3, label: "Business Verify" },
+  { id: 4, label: "Ownership Structure" },
+  { id: 5, label: "Financial DD" },
+  { id: 6, label: "Risk Assessment" },
+  { id: 7, label: "TM Setup" },
 ]
+
+/* ---------- Agents grouped by status, with stage coverage ---------- */
+const LIVE_AGENTS = [
+  { name: "OpsMate", impact: "Orchestrates end-to-end onboarding", stages: [1, 2, 3, 4, 5, 6, 7] },
+  { name: "Business Verification", impact: "Validates registered businesses instantly", stages: [3] },
+  { name: "Sole Trader Verification", impact: "Auto-verifies sole trader applications", stages: [2, 3] },
+  { name: "APC Mate", impact: "Automates analyst quality checks", stages: [6] },
+]
+
+const DEV_AGENTS = [
+  { name: "Document Intelligence", impact: "Extracts data from uploaded documents", stages: [1, 2, 5] },
+  { name: "UBO", impact: "Identifies ultimate beneficial owners", stages: [4] },
+  { name: "Address Density", impact: "Detects high-risk address patterns", stages: [2] },
+  { name: "Plausibility", impact: "Sanity-checks business claims", stages: [3] },
+  { name: "Source of Fund", impact: "Validates funding origin & legitimacy", stages: [5] },
+]
+
+const RESEARCH_AGENTS = [
+  { name: "Complex Ownership", impact: "Untangles multi-layer corporate structures", stages: [4] },
+  { name: "Business Plan Review", impact: "Assesses business plan viability", stages: [3, 5] },
+  { name: "Company Financial", impact: "Analyses financial statements & ratios", stages: [5] },
+  { name: "Transaction Monitoring", impact: "Monitors ongoing transaction risk", stages: [7] },
+  { name: "Sanctions Screen", impact: "Real-time sanctions & PEP screening", stages: [4, 6] },
+]
+
+const PHASE_IMPACT = {
+  live: {
+    headline: "Foundation set",
+    statement:
+      "4 production agents proving value today — automated checks running 24/7, freeing analyst time on every case",
+    metrics: [
+      { label: "Apps automated", value: "60%" },
+      { label: "Time saved/case", value: "~3 hrs" },
+    ],
+  },
+  dev: {
+    headline: "Coverage expanding",
+    statement:
+      "5 agents in build — unlocking Right-First-Time validation at the customer's fingertips during form fill",
+    metrics: [
+      { label: "RFT lift", value: "+18%" },
+      { label: "STP lift", value: "+24%" },
+    ],
+  },
+  research: {
+    headline: "Complex cases next",
+    statement:
+      "5 agents in design — tackling complex ownership, financials & ongoing monitoring to reach full coverage",
+    metrics: [
+      { label: "Target RFT", value: "94%" },
+      { label: "Target STP", value: "78%" },
+    ],
+  },
+}
 
 export function AgentStory() {
   return (
-    <div className="min-h-screen p-4" style={{ background: NW.bg }}>
-      <div className="mx-auto max-w-6xl">
+    <div className="min-h-screen p-6" style={{ background: NW.bg }}>
+      <div className="mx-auto max-w-7xl">
         {/* Header */}
-        <div className="mb-4 text-center">
-          <h1 className="text-2xl font-bold" style={{ color: NW.primary }}>
-            The Agentic Journey: Continuous Improvement
+        <div className="mb-5 text-center">
+          <div
+            className="inline-flex items-center gap-2 rounded-full border bg-white px-3 py-1 text-xs font-medium"
+            style={{ borderColor: `${NW.primary}33`, color: NW.primary }}
+          >
+            <Sparkles className="size-3" />
+            Executive View
+          </div>
+          <h1 className="mt-3 text-2xl font-bold" style={{ color: NW.primary }}>
+            Embedded AI Agents Across the Onboarding Journey
           </h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            As more agents deploy, benefits compound across the onboarding process
+          <p className="mt-1 text-sm text-muted-foreground">
+            Continuous deployment of agents → compounding benefits at every stage
           </p>
         </div>
 
-        {/* Main Content - Two columns */}
-        <div className="grid grid-cols-12 gap-4">
-          
-          {/* Left: Benefits Curve - 5 cols */}
-          <div className="col-span-5 rounded-xl border bg-white p-4" style={{ borderColor: `${NW.primary}22` }}>
-            <h2 className="text-sm font-bold mb-3" style={{ color: NW.primary }}>
-              Projected Benefits as Agents Deploy
+        {/* Top Strip: Journey with embedded agent indicators */}
+        <div
+          className="mb-5 rounded-2xl border-2 bg-white p-4 shadow-sm"
+          style={{ borderColor: `${NW.primary}22` }}
+        >
+          <div className="mb-3 flex items-center justify-between">
+            <h2 className="text-xs font-bold uppercase tracking-wider" style={{ color: NW.primary }}>
+              The Onboarding Journey
             </h2>
-            
-            {/* Simple bar chart showing progression */}
-            <div className="space-y-4">
-              {BENEFIT_MILESTONES.map((milestone, idx) => (
-                <div key={milestone.label} className="relative">
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-xs font-medium">{milestone.label}</span>
-                    <span className="text-[10px] text-muted-foreground">{milestone.agents} agents</span>
-                  </div>
-                  
-                  {/* RFT bar */}
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-[9px] w-8 text-muted-foreground">RFT</span>
-                    <div className="flex-1 h-4 bg-muted/20 rounded overflow-hidden">
-                      <div 
-                        className="h-full rounded transition-all duration-500 flex items-center justify-end pr-1"
-                        style={{ 
-                          width: `${milestone.rft}%`, 
-                          background: idx === 0 ? NW.muted : idx === 1 ? NW.live : idx === 2 ? NW.dev : NW.research
-                        }}
-                      >
-                        <span className="text-[9px] font-bold text-white">{milestone.rft}%</span>
-                      </div>
+            <div className="flex gap-3 text-[11px]">
+              <Legend color={NW.live} label="Live" />
+              <Legend color={NW.dev} label="In Build" />
+              <Legend color={NW.research} label="Research" />
+            </div>
+          </div>
+
+          <div className="flex items-center gap-1">
+            {JOURNEY_STAGES.map((stage, i) => {
+              const liveCount = LIVE_AGENTS.filter((a) => a.stages.includes(stage.id)).length
+              const devCount = DEV_AGENTS.filter((a) => a.stages.includes(stage.id)).length
+              const researchCount = RESEARCH_AGENTS.filter((a) => a.stages.includes(stage.id)).length
+              return (
+                <div key={stage.id} className="flex flex-1 items-center">
+                  <div className="flex flex-1 flex-col items-center">
+                    <div
+                      className="flex size-11 items-center justify-center rounded-full font-bold text-base text-white shadow-md"
+                      style={{ background: `linear-gradient(135deg, ${NW.primary}, ${NW.accent})` }}
+                    >
+                      {stage.id}
+                    </div>
+                    <div
+                      className="mt-1.5 px-1 text-center text-[10px] font-semibold leading-tight"
+                      style={{ color: NW.text }}
+                    >
+                      {stage.label}
+                    </div>
+                    <div className="mt-1 flex gap-0.5">
+                      {liveCount > 0 && <Dot color={NW.live} count={liveCount} />}
+                      {devCount > 0 && <Dot color={NW.dev} count={devCount} />}
+                      {researchCount > 0 && <Dot color={NW.research} count={researchCount} />}
                     </div>
                   </div>
-                  
-                  {/* STP bar */}
-                  <div className="flex items-center gap-2">
-                    <span className="text-[9px] w-8 text-muted-foreground">STP</span>
-                    <div className="flex-1 h-4 bg-muted/20 rounded overflow-hidden">
-                      <div 
-                        className="h-full rounded transition-all duration-500 flex items-center justify-end pr-1"
-                        style={{ 
-                          width: `${milestone.stp}%`, 
-                          background: idx === 0 ? NW.muted : idx === 1 ? NW.live : idx === 2 ? NW.dev : NW.research
-                        }}
-                      >
-                        <span className="text-[9px] font-bold text-white">{milestone.stp}%</span>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  {/* Arrow to next milestone */}
-                  {idx < BENEFIT_MILESTONES.length - 1 && (
-                    <div className="flex justify-center my-2">
-                      <ArrowRight className="size-4 text-muted-foreground/40 rotate-90" />
-                    </div>
+                  {i < JOURNEY_STAGES.length - 1 && (
+                    <ArrowRight className="size-4 shrink-0" style={{ color: `${NW.primary}55` }} />
                   )}
                 </div>
-              ))}
+              )
+            })}
+          </div>
+        </div>
+
+        {/* Three Phase Columns - Story Progression */}
+        <div className="grid gap-4 lg:grid-cols-3">
+          <PhaseColumn
+            phase="Live Today"
+            phaseLabel="Deployed"
+            color={NW.live}
+            icon={Rocket}
+            agents={LIVE_AGENTS}
+            impact={PHASE_IMPACT.live}
+            stepNum={1}
+          />
+          <PhaseColumn
+            phase="In Build"
+            phaseLabel="Next 6 Months"
+            color={NW.dev}
+            icon={Code2}
+            agents={DEV_AGENTS}
+            impact={PHASE_IMPACT.dev}
+            stepNum={2}
+          />
+          <PhaseColumn
+            phase="Research & Design"
+            phaseLabel="6-12 Months"
+            color={NW.research}
+            icon={FlaskConical}
+            agents={RESEARCH_AGENTS}
+            impact={PHASE_IMPACT.research}
+            stepNum={3}
+          />
+        </div>
+
+        {/* Bottom executive summary */}
+        <div
+          className="mt-5 rounded-2xl border-2 p-4"
+          style={{
+            borderColor: `${NW.primary}33`,
+            background: `linear-gradient(135deg, ${NW.primary}08, ${NW.accent}08)`,
+          }}
+        >
+          <div className="flex items-start gap-4">
+            <div
+              className="flex size-11 shrink-0 items-center justify-center rounded-xl text-white shadow-md"
+              style={{ background: `linear-gradient(135deg, ${NW.primary}, ${NW.accent})` }}
+            >
+              <Target className="size-5" />
             </div>
-            
-            {/* Key message */}
-            <div className="mt-4 p-2 rounded-lg text-center" style={{ background: `${NW.live}10` }}>
-              <p className="text-[10px] font-medium" style={{ color: NW.live }}>
-                Each wave of agents compounds the benefits
+            <div className="flex-1">
+              <h3 className="text-base font-bold" style={{ color: NW.primary }}>
+                The Story: Continuous Deployment, Compounding Impact
+              </h3>
+              <p className="mt-1 text-sm leading-relaxed" style={{ color: NW.text }}>
+                We start with{" "}
+                <span className="font-semibold" style={{ color: NW.live }}>
+                  4 agents in production today
+                </span>{" "}
+                — proving the model works. As we ship the next{" "}
+                <span className="font-semibold" style={{ color: NW.dev }}>
+                  5 agents in build
+                </span>
+                , customer-facing validation goes live, dramatically lifting Right-First-Time and
+                Straight-Through rates. The final{" "}
+                <span className="font-semibold" style={{ color: NW.research }}>
+                  5 research agents
+                </span>{" "}
+                will close the loop on complex cases — taking us from{" "}
+                <span className="font-bold">62% → 94% RFT</span> and{" "}
+                <span className="font-bold">28% → 78% STP</span>.
               </p>
-            </div>
-          </div>
-
-          {/* Right: Agent Pipeline - 7 cols */}
-          <div className="col-span-7 rounded-xl border bg-white p-4" style={{ borderColor: `${NW.primary}22` }}>
-            <h2 className="text-sm font-bold mb-3" style={{ color: NW.primary }}>
-              Agent Pipeline: From Research to Production
-            </h2>
-            
-            {/* Pipeline visualization */}
-            <div className="relative">
-              {/* Flow arrow background */}
-              <div className="absolute top-1/2 left-0 right-0 h-1 -translate-y-1/2 rounded-full" 
-                   style={{ background: `linear-gradient(90deg, ${NW.research}, ${NW.dev}, ${NW.live})` }} />
-              
-              {/* Three columns for stages */}
-              <div className="relative grid grid-cols-3 gap-3">
-                {/* Research */}
-                <div className="rounded-lg p-3" style={{ background: `${NW.research}08`, border: `1px solid ${NW.research}33` }}>
-                  <div className="flex items-center gap-1.5 mb-2">
-                    <div className="flex size-5 items-center justify-center rounded-full text-white" style={{ background: NW.research }}>
-                      <FlaskConical className="size-3" />
-                    </div>
-                    <span className="text-xs font-bold" style={{ color: NW.research }}>Research</span>
-                    <span className="text-[9px] text-muted-foreground ml-auto">{AGENTS.research.length}</span>
-                  </div>
-                  <div className="space-y-1.5">
-                    {AGENTS.research.map((agent) => (
-                      <div key={agent.name} className="flex items-start gap-1.5">
-                        <Bot className="size-3 mt-0.5 shrink-0" style={{ color: NW.research }} />
-                        <div>
-                          <div className="text-[9px] font-medium leading-tight">{agent.name}</div>
-                          <div className="text-[8px] text-muted-foreground">{agent.benefit}</div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* In Development */}
-                <div className="rounded-lg p-3" style={{ background: `${NW.dev}08`, border: `1px solid ${NW.dev}33` }}>
-                  <div className="flex items-center gap-1.5 mb-2">
-                    <div className="flex size-5 items-center justify-center rounded-full text-white" style={{ background: NW.dev }}>
-                      <Code2 className="size-3" />
-                    </div>
-                    <span className="text-xs font-bold" style={{ color: NW.dev }}>In Dev</span>
-                    <span className="text-[9px] text-muted-foreground ml-auto">{AGENTS.dev.length}</span>
-                  </div>
-                  <div className="space-y-1.5">
-                    {AGENTS.dev.map((agent) => (
-                      <div key={agent.name} className="flex items-start gap-1.5">
-                        <Bot className="size-3 mt-0.5 shrink-0" style={{ color: NW.dev }} />
-                        <div>
-                          <div className="text-[9px] font-medium leading-tight">{agent.name}</div>
-                          <div className="text-[8px] text-muted-foreground">{agent.benefit}</div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Live */}
-                <div className="rounded-lg p-3" style={{ background: `${NW.live}08`, border: `2px solid ${NW.live}` }}>
-                  <div className="flex items-center gap-1.5 mb-2">
-                    <div className="flex size-5 items-center justify-center rounded-full text-white" style={{ background: NW.live }}>
-                      <Rocket className="size-3" />
-                    </div>
-                    <span className="text-xs font-bold" style={{ color: NW.live }}>Live</span>
-                    <span className="text-[9px] text-muted-foreground ml-auto">{AGENTS.live.length}</span>
-                  </div>
-                  <div className="space-y-1.5">
-                    {AGENTS.live.map((agent) => (
-                      <div key={agent.name} className="flex items-start gap-1.5">
-                        <CheckCircle2 className="size-3 mt-0.5 shrink-0" style={{ color: NW.live }} />
-                        <div>
-                          <div className="text-[9px] font-medium leading-tight">{agent.name}</div>
-                          <div className="text-[8px] text-muted-foreground">{agent.benefit}</div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-              
-              {/* Direction arrows */}
-              <div className="flex justify-around mt-2">
-                <div className="flex items-center gap-1 text-[9px] text-muted-foreground">
-                  <ArrowRight className="size-3" />
-                  <span>Moving to Dev</span>
-                </div>
-                <div className="flex items-center gap-1 text-[9px] text-muted-foreground">
-                  <ArrowRight className="size-3" />
-                  <span>Going Live</span>
-                </div>
+              <div className="mt-3 grid grid-cols-2 gap-2 md:grid-cols-4">
+                <SummaryStat icon={Zap} label="14 agents in pipeline" color={NW.primary} />
+                <SummaryStat icon={Clock} label="5-7 days → hours" color={NW.accent} />
+                <SummaryStat icon={Shield} label="Higher accuracy" color={NW.live} />
+                <SummaryStat icon={Users} label="Analysts → complex cases" color={NW.dev} />
               </div>
             </div>
           </div>
-        </div>
-
-        {/* Bottom: Key Stats */}
-        <div className="mt-4 grid grid-cols-4 gap-3">
-          <div className="rounded-lg border bg-white p-3 text-center" style={{ borderColor: `${NW.live}44` }}>
-            <div className="text-2xl font-bold" style={{ color: NW.live }}>4</div>
-            <div className="text-[10px] font-medium text-muted-foreground">Agents Live</div>
-            <div className="text-[9px]" style={{ color: NW.live }}>Delivering value now</div>
-          </div>
-          <div className="rounded-lg border bg-white p-3 text-center" style={{ borderColor: `${NW.dev}44` }}>
-            <div className="text-2xl font-bold" style={{ color: NW.dev }}>5</div>
-            <div className="text-[10px] font-medium text-muted-foreground">In Development</div>
-            <div className="text-[9px]" style={{ color: NW.dev }}>Coming in 2024</div>
-          </div>
-          <div className="rounded-lg border bg-white p-3 text-center" style={{ borderColor: `${NW.research}44` }}>
-            <div className="text-2xl font-bold" style={{ color: NW.research }}>5</div>
-            <div className="text-[10px] font-medium text-muted-foreground">In Research</div>
-            <div className="text-[9px]" style={{ color: NW.research }}>Future roadmap</div>
-          </div>
-          <div className="rounded-lg border bg-white p-3 text-center" style={{ borderColor: `${NW.primary}44` }}>
-            <div className="text-2xl font-bold" style={{ color: NW.primary }}>14</div>
-            <div className="text-[10px] font-medium text-muted-foreground">Total Pipeline</div>
-            <div className="text-[9px]" style={{ color: NW.primary }}>Full automation vision</div>
-          </div>
-        </div>
-
-        {/* Story message */}
-        <div className="mt-4 rounded-xl p-4 text-center" style={{ background: `${NW.primary}08`, border: `1px solid ${NW.primary}22` }}>
-          <h3 className="text-sm font-bold" style={{ color: NW.primary }}>The Story</h3>
-          <p className="text-xs text-muted-foreground mt-1 max-w-2xl mx-auto">
-            We started with 4 agents and achieved 78% RFT. As we deploy each new wave of agents, 
-            benefits compound - more automation, higher accuracy, faster processing. 
-            The full pipeline of 14 agents will transform commercial onboarding to 94%+ RFT and 78%+ STP.
-          </p>
         </div>
       </div>
+    </div>
+  )
+}
+
+/* ---------- Subcomponents ---------- */
+
+function PhaseColumn({
+  phase,
+  phaseLabel,
+  color,
+  icon: Icon,
+  agents,
+  impact,
+  stepNum,
+}: {
+  phase: string
+  phaseLabel: string
+  color: string
+  icon: any
+  agents: { name: string; impact: string; stages: number[] }[]
+  impact: { headline: string; statement: string; metrics: { label: string; value: string }[] }
+  stepNum: number
+}) {
+  return (
+    <div
+      className="overflow-hidden rounded-2xl border-2 bg-white shadow-sm"
+      style={{ borderColor: `${color}55` }}
+    >
+      {/* Header */}
+      <div className="px-4 py-3" style={{ background: `${color}10`, borderBottom: `1px solid ${color}22` }}>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div
+              className="flex size-9 items-center justify-center rounded-lg text-white shadow-sm"
+              style={{ background: color }}
+            >
+              <Icon className="size-4" />
+            </div>
+            <div>
+              <div className="text-[10px] font-bold uppercase tracking-wider" style={{ color }}>
+                Step {stepNum} · {phaseLabel}
+              </div>
+              <div className="text-base font-bold" style={{ color: NW.text }}>
+                {phase}
+              </div>
+            </div>
+          </div>
+          <div
+            className="flex size-9 items-center justify-center rounded-full font-bold text-white"
+            style={{ background: color }}
+          >
+            {agents.length}
+          </div>
+        </div>
+      </div>
+
+      {/* Impact statement */}
+      <div className="px-4 py-3" style={{ background: `${color}05` }}>
+        <div className="text-[10px] font-bold uppercase tracking-wider" style={{ color }}>
+          {impact.headline}
+        </div>
+        <p className="mt-1 text-xs leading-relaxed" style={{ color: NW.text }}>
+          {impact.statement}
+        </p>
+        <div className="mt-2 flex gap-2">
+          {impact.metrics.map((m) => (
+            <div
+              key={m.label}
+              className="flex-1 rounded-lg bg-white px-2 py-1.5"
+              style={{ border: `1px solid ${color}33` }}
+            >
+              <div className="text-[9px] font-semibold uppercase" style={{ color: NW.muted }}>
+                {m.label}
+              </div>
+              <div className="text-sm font-bold" style={{ color }}>
+                {m.value}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Agent list */}
+      <div className="p-3">
+        <div className="mb-2 text-[10px] font-bold uppercase tracking-wider" style={{ color: NW.muted }}>
+          Agents
+        </div>
+        <div className="space-y-1.5">
+          {agents.map((agent) => (
+            <div
+              key={agent.name}
+              className="rounded-lg p-2 transition-colors hover:bg-muted/30"
+              style={{ borderLeft: `3px solid ${color}` }}
+            >
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-1.5">
+                  <Bot className="size-3 shrink-0" style={{ color }} />
+                  <span className="text-xs font-semibold" style={{ color: NW.text }}>
+                    {agent.name}
+                  </span>
+                </div>
+                <span
+                  className="rounded px-1.5 py-0.5 text-[9px] font-medium"
+                  style={{ background: `${color}15`, color }}
+                >
+                  Stage {agent.stages.length === JOURNEY_STAGES.length ? "All" : agent.stages.join(",")}
+                </span>
+              </div>
+              <p className="mt-0.5 pl-4 text-[10px] leading-snug text-muted-foreground">
+                {agent.impact}
+              </p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function Legend({ color, label }: { color: string; label: string }) {
+  return (
+    <div className="flex items-center gap-1.5">
+      <div className="size-2.5 rounded-full" style={{ background: color }} />
+      <span className="font-medium" style={{ color: NW.text }}>
+        {label}
+      </span>
+    </div>
+  )
+}
+
+function Dot({ color, count }: { color: string; count: number }) {
+  return (
+    <div
+      className="flex size-3.5 items-center justify-center rounded-full text-[8px] font-bold text-white"
+      style={{ background: color }}
+    >
+      {count}
+    </div>
+  )
+}
+
+function SummaryStat({ icon: Icon, label, color }: { icon: any; label: string; color: string }) {
+  return (
+    <div
+      className="flex items-center gap-2 rounded-lg border bg-white px-3 py-2"
+      style={{ borderColor: `${color}33` }}
+    >
+      <Icon className="size-4 shrink-0" style={{ color }} />
+      <span className="text-xs font-medium" style={{ color: NW.text }}>
+        {label}
+      </span>
     </div>
   )
 }
