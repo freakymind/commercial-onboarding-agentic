@@ -61,7 +61,7 @@ const RESEARCH_AGENTS = [
   { name: "Sanctions Screen", impact: "Real-time sanctions & PEP screening", stages: [4, 6] },
 ]
 
-/* ---------- Foundation / Underlying agents that span the platform ---------- */
+/* ---------- Foundation / Common agents that span the platform ---------- */
 const FOUNDATION_AGENTS = [
   { name: "Decision Agent", impact: "Approve / refer / decline recommendation" },
   { name: "Cash Check", impact: "Cash deposit & flow validation" },
@@ -69,6 +69,15 @@ const FOUNDATION_AGENTS = [
   { name: "LLM Onboarding", impact: "Conversational onboarding co-pilot" },
   { name: "Conversation Agent", impact: "Customer & analyst dialogue handler" },
   { name: "Customer View Agent", impact: "360° customer profile aggregation" },
+]
+
+/* ---------- Additional Identified agents on backlog (from main journey) ---------- */
+const IDENTIFIED_AGENTS = [
+  "Application Intake",
+  "Case Allocation",
+  "Web Search & Maps",
+  "Banking Data",
+  "Risk Scoring",
 ]
 
 const PHASE_IMPACT = {
@@ -103,7 +112,7 @@ const PHASE_IMPACT = {
 
 export function AgentStory() {
   const totalActive = LIVE_AGENTS.length + DEV_AGENTS.length + RESEARCH_AGENTS.length
-  const totalAll = totalActive + FOUNDATION_AGENTS.length
+  const totalAll = totalActive + FOUNDATION_AGENTS.length + IDENTIFIED_AGENTS.length
 
   return (
     <div className="min-h-screen p-6" style={{ background: NW.bg }}>
@@ -121,7 +130,9 @@ export function AgentStory() {
             Embedded AI Agents Across the Onboarding Journey
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Continuous deployment of agents → compounding benefits at every stage
+            Three pillars of journey-specific agents on a common foundation — together a pipeline of{" "}
+            <span className="font-semibold" style={{ color: NW.primary }}>~{totalAll} agents</span>{" "}
+            covering onboarding end-to-end
           </p>
         </div>
 
@@ -225,10 +236,10 @@ export function AgentStory() {
               </div>
               <div>
                 <div className="text-[10px] font-bold uppercase tracking-wider" style={{ color: NW.foundation }}>
-                  Common Underlying Layer · Identified & Planned
+                  Common Foundation Layer
                 </div>
                 <div className="text-base font-bold" style={{ color: NW.text }}>
-                  Foundation Agents — supporting all 3 pillars
+                  Common Agents — supporting all 3 pillars
                 </div>
               </div>
             </div>
@@ -309,13 +320,39 @@ export function AgentStory() {
                 </span>{" "}
                 — sit on top of a{" "}
                 <span className="font-semibold" style={{ color: NW.foundation }}>
-                  {FOUNDATION_AGENTS.length}-agent foundation layer
+                  {FOUNDATION_AGENTS.length}-agent common foundation
+                </span>
+                , with{" "}
+                <span className="font-semibold" style={{ color: NW.foundation }}>
+                  {IDENTIFIED_AGENTS.length} more identified
                 </span>{" "}
-                spanning decisions, monitoring, conversation and customer view. Together: ~
+                on the backlog. Together: ~
                 <span className="font-bold">{totalAll} agents end-to-end</span>, lifting{" "}
                 <span className="font-bold">62% → 94% RFT</span> and{" "}
                 <span className="font-bold">28% → 78% STP</span>.
               </p>
+
+              {/* Identified agents chip list */}
+              <div className="mt-3">
+                <div className="mb-1.5 text-[10px] font-bold uppercase tracking-wider" style={{ color: NW.foundation }}>
+                  Also identified · backlog
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {IDENTIFIED_AGENTS.map((name) => (
+                    <span
+                      key={name}
+                      className="rounded-full border px-2 py-0.5 text-[10px] font-medium"
+                      style={{
+                        borderColor: `${NW.foundation}55`,
+                        color: NW.foundation,
+                        background: `${NW.foundation}08`,
+                      }}
+                    >
+                      {name}
+                    </span>
+                  ))}
+                </div>
+              </div>
               <div className="mt-3 grid grid-cols-2 gap-2 md:grid-cols-4">
                 <SummaryStat icon={Zap} label={`~${totalAll} agents end-to-end`} color={NW.primary} />
                 <SummaryStat icon={Clock} label="5-7 days → hours" color={NW.accent} />
